@@ -1,0 +1,66 @@
+<div
+  class="min-h-screen bg-cyan-950 flex xl:justify-end sm:justify-center md:justify-center xl:px-20 sm:px-3 md:px-7 xl:py-20 sm:py-3"
+>
+  <div
+    class="box-border border-0 bg-cyan-700 xl:w-1/3 sm:w-10/12 md:w-1/2 w-full rounded-sm shadow-lg shadow-gray-900 xl:max-h-[50vh] sm:max-h-[50vh]..."
+  >
+    <div class="flx flex-col p-7">
+      <h2 class="text-4xl font-bold font-mono">Login</h2>
+      <p class="font-mono">Welcome to login</p>
+      <form (submit)="onSubmit($event)" class="flex flex-col mt-6">
+        <div class="mb-7">
+          <label for="label" class="block text-md font-medium text-blue-100 mb-2 font-mono"
+            >Email:
+          </label>
+          <input
+            type="email"
+            [formField]="loginForm.email"
+            class="bg-blue-300 rounded-sm w-full text-sm px-4 py-2 border border-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 font-mono"
+            placeholder="Enter your email"
+          />
+          <div class="h-1 mt-1">
+            @if (loginForm.email().touched() && loginForm.email().invalid()) {
+              @for (error of loginForm.email().errors(); track error) {
+                <p class="text-sm text-yellow-400 font-mono">{{ error.message }}</p>
+              }
+            }
+          </div>
+        </div>
+
+        <div class="">
+          <label class="block text-md font-medium text-blue-100 mb-2 font-mono">Password: </label>
+
+          <input
+            type="text"
+            [formField]="loginForm.password"
+            class="bg-blue-300 rounded-sm w-full text-sm px-4 py-2 border border-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 font-mono"
+            placeholder="Enter a password"
+          />
+          <div class="h-1 mt-1">
+            @if (loginForm.password().touched() && loginForm.password().invalid()) {
+              @for (error of loginForm.password().errors(); track error) {
+                <p class="text-sm text-yellow-400 font-mono">{{ error.message }}</p>
+              }
+            }
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          [disabled]="loginForm().invalid()"
+          class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition cursor-pointer xl:mt-12 mt-15 font-mono"
+        >
+          Login
+        </button>
+      </form>
+      <div class="flex justify-between mt-3">
+        <a href="" class="underline text-cyan-300 font-mono" routerLink="/auth/forget-password"
+          >Forgot Password?</a
+        >
+        <a href="" class="underline text-cyan-300 font-mono" routerLink="/auth/register"
+          >Create Account</a
+        >
+      </div>
+    </div>
+  </div>
+</div>

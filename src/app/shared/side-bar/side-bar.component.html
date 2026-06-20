@@ -1,0 +1,42 @@
+<div class="flex flex-1 bg-cyan-800 px-10 overflow-hidden flex-col h-full justify-between">
+  <aside class="text-white flex flex-col mt-5 gap-3 items-center">
+    <a
+      class="border border-0 hover:bg-cyan-700 rounded px-3 py-2 cursor-pointer"
+      routerLink="dashboard"
+    >
+      <span>Dashboard</span>
+    </a>
+    <a
+      class="border border-0 hover:bg-cyan-700 rounded px-3 py-2 cursor-pointer"
+      routerLink="banks"
+    >
+      <span>Banks</span>
+    </a>
+    <a
+      class="border border-0 hover:bg-cyan-700 rounded px-3 py-2 cursor-pointer"
+      routerLink="investments"
+    >
+      <span>Investments</span>
+    </a>
+    <a
+      class="border border-0 hover:bg-cyan-700 rounded px-3 py-2 cursor-pointer"
+      routerLink="transactions"
+    >
+      <span>Transactions</span>
+    </a>
+  </aside>
+  <div class="flex flex-col gap-5 mb-9 items-center">
+    <a
+      class="flex flex-auto justify-center items-center w-12 h-12 rounded-full bg-cyan-200 hover:bg-cyan-400 cursor-pointer"
+      title="Profile"
+      routerLink="profile"
+    >
+      <lucide-icon [img]="userPen"></lucide-icon>
+    </a>
+    <a
+      class="flex justify-center cursor-pointer text-black text-md hover:text-cyan-300 items-center"
+      routerLink="settings"
+      >Settings <lucide-icon [img]="settings" class="mx-1"></lucide-icon
+    ></a>
+  </div>
+</div>

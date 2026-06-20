@@ -1,0 +1,25 @@
+<!-- @if (toast.visible()) {
+  <div
+    class="fixed top-5 right-5 z-50 px-5 py-3 rounded-lg shadow-lg text-white min-w-[250px]"
+    [class.bg-green-600]="toast.type() === 'success'"
+    [class.bg-red-600]="toast.type() === 'error'"
+    [class.bg-yellow-500]="toast.type() === 'warning'"
+    [class.bg-blue-600]="toast.type() === 'info'"
+  >
+    {{ toast.message() }}
+  </div>
+} -->
+
+<div class="fixed top-5 right-5 z-50 flex flex-col gap-3">
+  @for (toast of toaster.toasts(); track toast.id) {
+    <div
+      class="min-w-[250px] px-4 py-3 rounded-lg shadow-lg text-white"
+      [class.bg-green-600]="toast.type === 'success'"
+      [class.bg-red-600]="toast.type === 'error'"
+      [class.bg-yellow-500]="toast.type === 'warning'"
+      [class.bg-blue-600]="toast.type === 'info'"
+    >
+      {{ toast.message }}
+    </div>
+  }
+</div>

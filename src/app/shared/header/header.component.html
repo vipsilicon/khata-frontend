@@ -1,0 +1,18 @@
+<div class="h-16 bg-cyan-950 text-white flex justify-between items-center px-6">
+  <div class="flex gap-2 items-center">
+    <lucide-icon [img]="noteBookPen" class="w-8 h-8"></lucide-icon>
+    <h1 class="text-2xl font-semibold">Khata</h1>
+  </div>
+
+  <div class="flex items-center gap-4">
+    <span
+      >Welcome, <span>{{ userName() }}</span></span
+    >
+    <button
+      class="bg-cyan-700 hover:bg-cyan-600 cursor-pointer px-4 py-2 rounded"
+      (click)="logout()"
+    >
+      Logout
+    </button>
+  </div>
+</div>
