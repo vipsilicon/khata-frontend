@@ -1,8 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { email, form, FormField, required, submit, validate } from '@angular/forms/signals';
-import { AuthServices } from '../../../../services/auth/auth.services';
-import { ToasterMessageUtils } from '../../../../utils/toaster-message/toaster-message.utils';
 import { Router, RouterLink } from '@angular/router';
+
+// Services
+import { AuthServices } from '../../../../services/auth/auth.services';
+
+// Utils
+import { ToasterMessageUtils } from '../../../../utils/toaster-message/toaster-message.utils';
 
 interface ResetPasswordData {
   email: string;
@@ -59,7 +63,6 @@ export class ForgetPasswordComponent {
   });
 
   onSubmit(event: Event) {
-    console.log('clicked');
     event.preventDefault();
     submit(this.resetPasswordForm, {
       action: async () => {

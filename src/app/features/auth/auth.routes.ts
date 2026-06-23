@@ -1,4 +1,6 @@
 import { Route } from '@angular/router';
+
+// Components
 import { LoginComponent } from './pages/login/login.component';
 import { RegisterComponent } from './pages/register/register.component';
 import { ForgetPasswordComponent } from './pages/forget-password/forget-password.component';

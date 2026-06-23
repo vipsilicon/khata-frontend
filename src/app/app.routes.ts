@@ -1,5 +1,9 @@
 import { Routes } from '@angular/router';
+
+// Guards
 import { authGuard } from './core/guard/auth-guard';
+
+// Components
 import { DashboardLayoutComponent } from './layouts/dashboard-layout/dashboard-layout.component';
 
 export const routes: Routes = [

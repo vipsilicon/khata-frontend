@@ -1,8 +1,12 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthStorageServices } from '../../services/auth-storage/auth-storage.services';
-import { ToasterMessageUtils } from '../../utils/toaster-message/toaster-message.utils';
 import { LucideAngularModule, NotebookPen } from 'lucide-angular';
+
+// Services
+import { AuthStorageServices } from '../../services/auth-storage/auth-storage.services';
+
+// Utils
+import { ToasterMessageUtils } from '../../utils/toaster-message/toaster-message.utils';
 
 @Component({
   selector: 'app-header',

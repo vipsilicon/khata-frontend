@@ -1,9 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { email, form, FormField, required, submit, validate } from '@angular/forms/signals';
-import { AuthServices } from '../../../../services/auth/auth.services';
-import { ToasterMessageUtils } from '../../../../utils/toaster-message/toaster-message.utils';
 import { Router, RouterLink } from '@angular/router';
+
+// Services
+import { AuthServices } from '../../../../services/auth/auth.services';
 import { AuthStorageServices } from '../../../../services/auth-storage/auth-storage.services';
+
+// Utils
+import { ToasterMessageUtils } from '../../../../utils/toaster-message/toaster-message.utils';
 
 interface LoginData {
   email: string;
@@ -41,7 +45,6 @@ export class LoginComponent {
   });
 
   onSubmit(event: Event) {
-    console.log('clicked');
     event.preventDefault();
     submit(this.loginForm, {
       action: async () => {
@@ -54,8 +57,6 @@ export class LoginComponent {
               this.router.navigate(['auth/register']);
               this.toasterMessageService.info('For log in, please register', 6000);
             } else {
-              // localStorage.setItem('accessToken', response.body.accessToken);
-              // localStorage.setItem('refreshToken', response.body.refreshToken);
               this.authStorageServices.saveTokens(
                 response.body.accessToken,
                 response.body.refreshToken,
@@ -66,7 +67,6 @@ export class LoginComponent {
                 email: response.body.email,
                 mobile: response.body.mobile,
               };
-              // localStorage.setItem('user', JSON.stringify(user));
               this.authStorageServices.saveUserDetails(JSON.stringify(user));
               this.toasterMessageService.success('Login Successfully', 3000);
               this.router.navigate(['/dashboard']);

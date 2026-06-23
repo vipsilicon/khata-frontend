@@ -1,1 +1,158 @@
-<p>profile.component works!</p>
+<div class="mx-auto max-w-4xl p-6">
+  <div class="rounded-2xl bg-white shadow-lg overflow-hidden">
+    <div class="border-b border-gray-400 px-8 py-5">
+      <h2 class="text-2xl font-bold text-gray-800">My Profile</h2>
+      <p class="mt-1 text-sm text-gray-500">Manage your personal information</p>
+    </div>
+    @if (loading()) {
+      <div class="p-8">
+        <div class="flex justify-center">
+          <div class="w-40 h-40 rounded-full animate-pulse bg-gray-300"></div>
+        </div>
+
+        <div class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2">
+          @for (items of [1, 2, 3, 4]; track items) {
+            <div>
+              <div class="mb-2 h-4 w-24 animate-pulse bg-gray-300 rounded"></div>
+              <div class="h-12 animate-pulse rounded bg-gray-300"></div>
+            </div>
+          }
+        </div>
+
+        <div class="mt-8 flex justify-end">
+          <div class="h-12 w-40 animate-pulse bg-gray-300 rounded"></div>
+        </div>
+      </div>
+    } @else {
+      <form class="p-8" [formGroup]="form" (ngSubmit)="update()">
+        <div class="mb-10 flex justify-center">
+          <div class="relative h-40 w-40 rounded-full border-4 border-gray-300">
+            @if (imagePreview()) {
+              <img class="h-full w-full rounded-full object-cover" [src]="imagePreview()" alt="" />
+            } @else {
+              <div
+                class="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-r from-cyan-500 to-cyan-800 text-6xl font-bold text-white"
+              >
+                {{ form.controls.firstName.value.charAt(0).toUpperCase() }}
+              </div>
+            }
+
+            <label
+              class="absolute bottom-2 right-2 flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-cyan-800 text-white shadow-lg transition hover:bg-blue-700"
+            >
+              📷
+
+              <input type="file" hidden accept="image/*" (change)="selectImage($event)" />
+            </label>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 mt-10 gap-6">
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-gray-700"> First Name </label>
+
+            <input
+              type="text"
+              formControlName="firstName"
+              class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+            />
+          </div>
+
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-gray-700"> Last Name </label>
+
+            <input
+              type="text"
+              formControlName="lastName"
+              class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+            />
+          </div>
+
+          <div class="mt-6">
+            <label class="mb-2 block text-sm font-semibold text-gray-700"> Email Address </label>
+
+            <input
+              type="email"
+              readonly
+              formControlName="email"
+              class="w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-100 px-4 py-3 text-gray-500"
+            />
+          </div>
+
+          <div class="mt-6">
+            <label class="mb-2 block text-sm font-semibold text-gray-700"> Mobile </label>
+
+            <input
+              type="string"
+              formControlName="mobile"
+              class="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+            />
+          </div>
+
+          <div></div>
+          <div class="mt-8 flex justify-end">
+            <button
+              type="submit"
+              [disabled]="updating()"
+              class="flex min-w-40 items-center cursor-pointer justify-center rounded-lg bg-blue-600 px-8 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+            >
+              @if (updating()) {
+                <svg
+                  class="mr-2 h-5 w-5 animate-spin"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-20"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+
+                  <path
+                    class="opacity-100"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                  ></path>
+                </svg>
+
+                Updating...
+              } @else {
+                Update Profile
+              }
+            </button>
+          </div>
+        </div>
+      </form>
+    }
+  </div>
+</div>
+
+@if (showConfirm()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+      <h3 class="text-xl font-semibold text-gray-800">Update Profile</h3>
+
+      <p class="mt-3 text-gray-600">Are you sure you want to update your profile?</p>
+
+      <div class="mt-8 flex justify-end gap-3">
+        <button
+          class="rounded-lg border px-5 py-2 hover:bg-gray-100"
+          (click)="showConfirm.set(false)"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="rounded-lg bg-blue-600 px-5 py-2 text-white hover:bg-blue-700"
+          (click)="confirmUpdate()"
+        >
+          Yes, Update
+        </button>
+      </div>
+    </div>
+  </div>
+}

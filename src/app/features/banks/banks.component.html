@@ -1,1 +1,142 @@
-<p>banks.component works!</p>
+<div class="p-6">
+  <div class="flex justify-between items-center mb-5">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-700">My Banks</h2>
+      <p class="text-gray-500 text-sm">Manage all your bank accounts</p>
+    </div>
+    <div class="flex gap-2">
+      <button
+        class="w-10 h-10 rounded-full bg-white shadow hover:bg-gray-400 transition"
+        (click)="scrollLeft()"
+      >
+        <lucide-icon [img]="chevronLeftIcon" class="flex justify-center items-center"></lucide-icon>
+      </button>
+      <button
+        class="w-10 h-10 rounded-full bg-white shadow hover:bg-gray-400 transition"
+        (click)="scrollRight()"
+      >
+        <lucide-icon
+          [img]="chevronRightIcon"
+          class="flex justify-center items-center"
+        ></lucide-icon>
+      </button>
+    </div>
+  </div>
+  <div
+    #scrollContainer
+    class="flex gap-5 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-3"
+    style="scrollbar-width: none"
+  >
+    @for (bank of banks(); track bank.id) {
+      <div
+        class="snap-start shrink-0 w-80 rounded-2xl bg-white shadow-sm hover:shadow-xl transition"
+      >
+        <div class="p-5">
+          <div class="flex items-center gap-3">
+            @if (bank.icon) {
+              <img [src]="bank.icon" class="w-20 h-20 rounded-full" alt="" />
+            } @else {
+              <div class="w-20 h-20 rounded-full bg-cyan-200"></div>
+            }
+            <div>
+              <h3 class="font-semibold text-lg">{{ bank.name }}</h3>
+              <p class="text-sm text-gray-500">{{ bank.code }}</p>
+            </div>
+          </div>
+          <div class="mt-2 grid grid-cols-2">
+            <p class="text-sm text-gray-600">Initial Amount</p>
+            <p class="text-sm text-gray-500">Rs. {{ bank.initialAmount | number }}</p>
+          </div>
+          <div class="mt-2 grid grid-cols-2">
+            <p class="text-sm text-gray-600">Balance</p>
+            <p class="text-sm text-gray-500">Rs. {{ bank.balance | number }}</p>
+          </div>
+          <div class="flex justify-end gap-3 mt-1">
+            <!-- Edit -->
+            <button
+              title="Edit"
+              type="button"
+              class="w-7 h-7 rounded-full bg-cyan-500 text-white flex items-center justify-center hover:bg-cyan-600 transition duration-200 shadow-md cursor-pointer"
+            >
+              <lucide-icon [img]="squarePen" class="w-4 h-4"></lucide-icon>
+            </button>
+
+            <!-- Delete -->
+            <button
+              title="Delete"
+              type="button"
+              class="w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition duration-200 shadow-md cursor-pointer"
+            >
+              <lucide-icon [img]="trash" class="w-4 h-4"></lucide-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div
+      class="snap-start shrink-0 w-80 rounded-2xl border-2 border-dashed border-cyan-400 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 transition"
+      (click)="showAddBankModal.set(true)"
+    >
+      <div
+        class="w-16 h-16 rounded-full bg-cyan-600 text-white flex items-center justify-center text-4xl"
+      >
+        <lucide-icon [img]="plus"></lucide-icon>
+      </div>
+
+      <p class="mt-4 font-semibold text-lg">Add Bank</p>
+    </div>
+  </div>
+
+  <div class="border-t mt-8">
+    <div class="mt-8"></div>
+  </div>
+</div>
+
+@if (showAddBankModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4 border-b bg-cyan-800 text-white">
+        <h2 class="text-xl font-semibold">Add Bank</h2>
+      </div>
+      <div class="p-6 space-y-5">
+        <label class="block mb-2 font-medium">Bank</label>
+        <select
+          class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:ring-2 focus:ring-cyan-500"
+        >
+          <option value="">Select Bank</option>
+
+          @for (bank of bankList(); track bank) {
+            <option value="bank">{{ bank }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="p-6 space-y-5">
+        <label class="mb-2 block font-medium"> Initial Amount </label>
+        <input
+          type="number"
+          placeholder="Enter intial amount"
+          class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:ring-2 focus: ring-cyan-500"
+        />
+      </div>
+
+      <div
+        class="mt-5 flex justify-end items-center gap-6 px-6 py-4 border-t border-cyan-800 bg-cyan-100"
+      >
+        <button
+          class="rounded-lg border px-3 py-2 bg-red-500 text-white hover:bg-red-600 cursor-pointer text-sm shadow-2xl"
+          (click)="closedModal()"
+        >
+          Cancel
+        </button>
+        <button
+          class="rounded-lg border px-3 py-2 bg-green-500 text-white hover:bg-green-600 cursor-pointer text-sm shadow-2xl"
+          (click)="savedModal()"
+        >
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+}
