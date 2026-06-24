@@ -8,6 +8,10 @@ import { AuthStorageServices } from '../../services/auth-storage/auth-storage.se
 // Utils
 import { ToasterMessageUtils } from '../../utils/toaster-message/toaster-message.utils';
 
+// Constants
+import { AUTH_CONST } from '../../core/constants/auth.constants';
+import { ROUTES_CONST } from '../../core/constants/routes.constants';
+
 @Component({
   selector: 'app-header',
   imports: [LucideAngularModule],
@@ -32,7 +36,7 @@ export class HeaderComponent implements OnInit {
 
   logout() {
     this.authStorage.logout();
-    this.router.navigate(['/auth/login']);
-    this.toasterMessage.success('Logout Successfully', 3000);
+    this.router.navigate([`${ROUTES_CONST.AUTH.LOGIN}`]);
+    this.toasterMessage.success(`${AUTH_CONST.TOASTER_MESSAGE.LOGOUT.SUCCESS}`, 3000);
   }
 }

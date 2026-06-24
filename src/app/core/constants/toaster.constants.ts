@@ -1,0 +1,3 @@
+export const TOASTER_CONST = {
+  DEFAULT_DURATION: 2000,
+};

@@ -13,6 +13,10 @@ import {
 // Services
 import { ApiServices } from '../../services/api/api.services';
 
+// Config
+import { API_CONFIG } from '../../core/config/api.config';
+import { ROUTES_CONST } from '../../core/constants/routes.constants';
+
 interface Bank {
   id: number;
   name: string;
@@ -52,7 +56,7 @@ export class BanksComponent implements OnInit {
 
   loadBankLists(): void {
     this.apiService
-      .get('http://localhost:3000/banks/list', { page: 1, limit: 10 })
+      .get(`${API_CONFIG.BANK.LIST}`, { page: 1, limit: 10 })
       .pipe(finalize(() => {}))
       .subscribe({
         next: (response: any) => {
@@ -68,7 +72,7 @@ export class BanksComponent implements OnInit {
     this.loading.set(true);
 
     this.apiService
-      .get('http://localhost:3000/user-banks/list', {})
+      .get(`${API_CONFIG.USER_BANK.LIST}`, {})
       .pipe(
         finalize(() => {
           this.loading.set(false);

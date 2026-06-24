@@ -1,6 +1,9 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
+// Constants
+import { AUTH_STORAGE } from '../../core/constants/auth-storage.constants';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -18,30 +21,30 @@ export class AuthStorageServices {
     if (!isPlatformBrowser(this.platformId)) {
       return null;
     }
-    return localStorage.getItem('accessToken');
+    return localStorage.getItem(`${AUTH_STORAGE.ACCESS_TOKEN}`);
   }
 
   getRefreshToken(): string | null {
     if (!isPlatformBrowser(this.platformId)) {
       return null;
     }
-    return localStorage.getItem('refreshToken');
+    return localStorage.getItem(`${AUTH_STORAGE.REFRESH_TOKEN}`);
   }
 
   logout() {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
+    localStorage.removeItem(`${AUTH_STORAGE.ACCESS_TOKEN}`);
+    localStorage.removeItem(`${AUTH_STORAGE.REFRESH_TOKEN}`);
+    localStorage.removeItem(`${AUTH_STORAGE.USER}`);
   }
 
   getUserName(): string | null {
     if (!isPlatformBrowser(this.platformId)) {
       return null;
     }
-    const user = localStorage.getItem('user');
+    const user = localStorage.getItem(`${AUTH_STORAGE.USER}`);
 
     if (user) {
       return JSON.parse(user).firstName;
@@ -51,15 +54,15 @@ export class AuthStorageServices {
   }
 
   saveUserDetails(user: string): void {
-    localStorage.setItem('user', user);
+    localStorage.setItem(`${AUTH_STORAGE.USER}`, user);
   }
 
   saveTokens(accessToken: string, refreshToken: string): void {
     if (typeof accessToken == 'string' && accessToken.length > 0) {
-      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem(`${AUTH_STORAGE.ACCESS_TOKEN}`, accessToken);
     }
     if (typeof refreshToken == 'string' && refreshToken.length > 0) {
-      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem(`${AUTH_STORAGE.REFRESH_TOKEN}`, refreshToken);
     }
   }
 }

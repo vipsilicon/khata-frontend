@@ -1,5 +1,8 @@
 import { Injectable, signal } from '@angular/core';
 
+// Constants
+import { TOASTER_CONST } from '../../core/constants/toaster.constants';
+
 export type ToasterType = 'success' | 'error' | 'warning' | 'info';
 
 interface ToastMessage {
@@ -14,7 +17,7 @@ interface ToastMessage {
 })
 export class ToasterMessageUtils {
   toasts = signal<ToastMessage[]>([]);
-  private add(message: string, type: ToasterType, duration = 2000) {
+  private add(message: string, type: ToasterType, duration = TOASTER_CONST.DEFAULT_DURATION) {
     const toast: ToastMessage = {
       id: Date.now().toString(),
       message,
@@ -35,19 +38,19 @@ export class ToasterMessageUtils {
     });
   }
 
-  success(message: string, duration = 2000) {
+  success(message: string, duration = TOASTER_CONST.DEFAULT_DURATION) {
     this.add(message, 'success', duration);
   }
 
-  error(message: string, duration = 2000) {
+  error(message: string, duration = TOASTER_CONST.DEFAULT_DURATION) {
     this.add(message, 'error', duration);
   }
 
-  warning(message: string, duration = 2000) {
+  warning(message: string, duration = TOASTER_CONST.DEFAULT_DURATION) {
     this.add(message, 'warning', duration);
   }
 
-  info(message: string, duration = 2000) {
+  info(message: string, duration = TOASTER_CONST.DEFAULT_DURATION) {
     this.add(message, 'info', duration);
   }
 }

@@ -2,25 +2,25 @@
   <aside class="text-white flex flex-col mt-5 gap-3 items-center">
     <a
       class="border border-0 hover:bg-cyan-700 rounded px-3 py-2 cursor-pointer"
-      routerLink="dashboard"
+      (click)="dashboardPage()"
     >
       <span>Dashboard</span>
     </a>
     <a
       class="border border-0 hover:bg-cyan-700 rounded px-3 py-2 cursor-pointer"
-      routerLink="banks"
+      (click)="banksPage()"
     >
       <span>Banks</span>
     </a>
     <a
       class="border border-0 hover:bg-cyan-700 rounded px-3 py-2 cursor-pointer"
-      routerLink="investments"
+      (click)="investmentsPage()"
     >
       <span>Investments</span>
     </a>
     <a
       class="border border-0 hover:bg-cyan-700 rounded px-3 py-2 cursor-pointer"
-      routerLink="transactions"
+      (click)="transactionsPage()"
     >
       <span>Transactions</span>
     </a>
@@ -29,13 +29,13 @@
     <a
       class="flex flex-auto justify-center items-center w-12 h-12 rounded-full bg-white hover:bg-cyan-400 cursor-pointer"
       title="Profile"
-      routerLink="profile"
+      (click)="profilePage()"
     >
       <lucide-icon [img]="userPen"></lucide-icon>
     </a>
     <a
       class="flex justify-center cursor-pointer text-white text-md hover:text-cyan-300 items-center"
-      routerLink="settings"
+      (click)="settingsPage()"
       >Settings <lucide-icon [img]="settings" class="mx-1"></lucide-icon
     ></a>
   </div>

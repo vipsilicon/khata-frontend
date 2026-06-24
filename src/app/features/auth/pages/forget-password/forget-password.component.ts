@@ -8,6 +8,10 @@ import { AuthServices } from '../../../../services/auth/auth.services';
 // Utils
 import { ToasterMessageUtils } from '../../../../utils/toaster-message/toaster-message.utils';
 
+// Constants
+import { AUTH_CONST } from '../../../../core/constants/auth.constants';
+import { ROUTES_CONST } from '../../../../core/constants/routes.constants';
+
 interface ResetPasswordData {
   email: string;
   password: string;
@@ -41,23 +45,23 @@ export class ForgetPasswordComponent {
   isOtpGenerated = signal<boolean>(false);
 
   resetPasswordForm = form(this.resetPasswordModal, (schemapath) => {
-    required(schemapath.email, { message: 'Email is required' });
-    email(schemapath.email, { message: 'Enter a valid email' });
-    required(schemapath.password, { message: 'Password is required' });
+    required(schemapath.email, { message: `${AUTH_CONST.MODAL.MESSAGES.EMAIL_REQUIRED}` });
+    email(schemapath.email, { message: `${AUTH_CONST.MODAL.MESSAGES.VALID_EMAIL}` });
+    required(schemapath.password, { message: `${AUTH_CONST.MODAL.MESSAGES.PASSWORD_REQUIRED}` });
     validate(schemapath.password, (ctx: any) => {
       const len = ctx.value()?.length ?? 0;
       if (len < 6) {
-        return { kind: 'error', message: 'Password must be at least 6 characters' } as any;
+        return { kind: 'error', message: `${AUTH_CONST.MODAL.MESSAGES.PASSWORD_LENGTH}` } as any;
       }
     });
   });
 
   otpForm = form(this.otpModal, (schemaPath) => {
-    required(schemaPath.otp, { message: 'Otp is required' });
+    required(schemaPath.otp, { message: `${AUTH_CONST.MODAL.MESSAGES.OTP_REQUIRED}` });
     validate(schemaPath.otp, (ctx) => {
       const len = ctx.value()?.length ?? 0;
       if (len < 6) {
-        return { kind: 'error', message: 'Otp must be at least 6 characters' } as any;
+        return { kind: 'error', message: `${AUTH_CONST.MODAL.MESSAGES.OTP_LENGTH}` } as any;
       }
     });
   });
@@ -73,15 +77,23 @@ export class ForgetPasswordComponent {
             if (response.statusCode !== 200) {
               this.toasterMessageService.error(`${response.message}`, 3000);
               this.router.navigate(['auth/register']);
-              this.toasterMessageService.info('For log in, please register', 6000);
+              this.toasterMessageService.info(
+                `${AUTH_CONST.TOASTER_MESSAGE.FORGET_PASSWORD.PLEASE_REGISTER}`,
+                6000,
+              );
             } else {
-              this.toasterMessageService.success('Reset Password Successfully', 3000);
-              this.router.navigate(['/auth/login']);
+              this.toasterMessageService.success(
+                `${AUTH_CONST.TOASTER_MESSAGE.FORGET_PASSWORD.RESET_PASSWORD_SUCCESS}`,
+                3000,
+              );
+              this.router.navigate([`${ROUTES_CONST.AUTH.LOGIN}`]);
             }
           },
           error: (error) => {
             console.log(error);
-            this.toasterMessageService.error('Reset Password Failed');
+            this.toasterMessageService.error(
+              `${AUTH_CONST.TOASTER_MESSAGE.FORGET_PASSWORD.RESET_PASSWORD_FAILED}`,
+            );
           },
         });
       },

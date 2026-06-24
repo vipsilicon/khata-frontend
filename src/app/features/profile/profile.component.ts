@@ -9,6 +9,12 @@ import { ApiServices } from '../../services/api/api.services';
 // Utils
 import { ToasterMessageUtils } from '../../utils/toaster-message/toaster-message.utils';
 
+// Configs
+import { API_CONFIG } from '../../core/config/api.config';
+
+// Constants
+import { PROFILE_CONST } from '../../core/constants/profile.constants';
+
 interface UserProfile {
   firstName: string;
   lastName: string;
@@ -49,7 +55,7 @@ export class ProfileComponent implements OnInit {
     this.loading.set(true);
 
     this.apiService
-      .get('http://localhost:3000/users/profile', {})
+      .get(`${API_CONFIG.PROFILE.FETCH}`, {})
       .pipe(
         finalize(() => {
           this.loading.set(false);
@@ -82,14 +88,14 @@ export class ProfileComponent implements OnInit {
     const file = input.files[0];
 
     if (!file.type.startsWith('image/')) {
-      this.toasterMessageService.warning('Please Select An Image');
+      this.toasterMessageService.warning(`${PROFILE_CONST.TOASTER_MESSAGE.SELECT_IMAGE}`);
       input.value = '';
 
       return;
     }
 
     if (file.size > 1024 * 1024) {
-      this.toasterMessageService.warning('Image Size Should Be Less Than 1 MB');
+      this.toasterMessageService.warning(`${PROFILE_CONST.TOASTER_MESSAGE.IMAGE_SIZE}`);
       input.value = '';
       return;
     }
@@ -134,15 +140,8 @@ export class ProfileComponent implements OnInit {
       formData.append('avatar', image);
     }
 
-    // const body = {
-    //   firstName: this.form.controls.firstName.value.trim(),
-    //   lastName: this.form.controls.lastName.value.trim(),
-    //   mobile: this.form.controls.mobile.value.trim(),
-    //   avatar,
-    // };
-
     this.apiService
-      .put('http://localhost:3000/users/profile/update', formData)
+      .put(`${API_CONFIG.PROFILE.UPDATE}`, formData)
       .pipe(
         finalize(() => {
           this.updating.set(false);
@@ -150,7 +149,7 @@ export class ProfileComponent implements OnInit {
       )
       .subscribe({
         next: (response) => {
-          this.toasterMessageService.success('Profile updated successfully.');
+          this.toasterMessageService.success(`${PROFILE_CONST.TOASTER_MESSAGE.UPDATE.SUCCESS}`);
           this.selectedImage.set(null);
 
           this.loadProfile();
@@ -159,7 +158,7 @@ export class ProfileComponent implements OnInit {
         error: (error) => {
           console.error(error);
 
-          alert(error?.error?.message ?? 'Unable to update profile.');
+          this.toasterMessageService.error(`${PROFILE_CONST.TOASTER_MESSAGE.UPDATE.FAILED}`);
         },
       });
   }

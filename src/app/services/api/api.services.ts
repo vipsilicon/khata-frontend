@@ -1,12 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environment/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ApiServices {
   private http = inject(HttpClient);
+  private apiBaseUrl = environment.apiBaseUrl;
 
   private createParams(params?: Record<string, any>): HttpParams {
     let httpParams = new HttpParams();
@@ -27,10 +29,10 @@ export class ApiServices {
   }
 
   get<T>(url: string, params?: Record<string, any>): Observable<T> {
-    return this.http.get<T>(url, { params: this.createParams(params) });
+    return this.http.get<T>(`${this.apiBaseUrl}${url}`, { params: this.createParams(params) });
   }
 
   put<T>(url: string, body: any): Observable<T> {
-    return this.http.put<T>(url, body, {});
+    return this.http.put<T>(`${this.apiBaseUrl}${url}`, body, {});
   }
 }

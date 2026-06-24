@@ -8,6 +8,10 @@ import { AuthServices } from '../../../../services/auth/auth.services';
 // Utils
 import { ToasterMessageUtils } from '../../../../utils/toaster-message/toaster-message.utils';
 
+// Constants
+import { AUTH_CONST } from '../../../../core/constants/auth.constants';
+import { ROUTES_CONST } from '../../../../core/constants/routes.constants';
+
 interface RegisterData {
   firstName: string;
   lastName: string;
@@ -37,26 +41,26 @@ export class RegisterComponent {
   });
 
   registerForm = form(this.registerModal, (schemapath) => {
-    required(schemapath.firstName, { message: 'First name is required' });
-    required(schemapath.lastName, { message: 'Last name is required' });
-    required(schemapath.mobile, { message: 'Mobile is required' });
+    required(schemapath.firstName, { message: `${AUTH_CONST.MODAL.MESSAGES.FIRST_NAME_REQUIRED}` });
+    required(schemapath.lastName, { message: `${AUTH_CONST.MODAL.MESSAGES.LAST_NAME_REQUIRED}` });
+    required(schemapath.mobile, { message: `${AUTH_CONST.MODAL.MESSAGES.MOBILE_REQUIRED}` });
     validate(schemapath.mobile, (ctx: any) => {
       const mobile = ctx.value()?.trim() ?? '';
 
       if (!/^[6-9]\d{9}$/.test(mobile)) {
         return {
           kind: 'error',
-          message: 'Enter a valid 10-digit Indian mobile number',
+          message: `${AUTH_CONST.MODAL.MESSAGES.MOBILE_LENGTH}`,
         } as any;
       }
     });
-    required(schemapath.email, { message: 'Email is required' });
-    email(schemapath.email, { message: 'Enter a valid email' });
-    required(schemapath.password, { message: 'Password is required' });
+    required(schemapath.email, { message: `${AUTH_CONST.MODAL.MESSAGES.EMAIL_REQUIRED}` });
+    email(schemapath.email, { message: `${AUTH_CONST.MODAL.MESSAGES.VALID_EMAIL}` });
+    required(schemapath.password, { message: `${AUTH_CONST.MODAL.MESSAGES.PASSWORD_REQUIRED}` });
     validate(schemapath.password, (ctx: any) => {
       const len = ctx.value()?.length ?? 0;
       if (len < 6) {
-        return { kind: 'error', message: 'Password must be at least 6 characters' } as any;
+        return { kind: 'error', message: `${AUTH_CONST.MODAL.MESSAGES.PASSWORD_LENGTH}` } as any;
       }
     });
   });
@@ -70,13 +74,16 @@ export class RegisterComponent {
         this.authService.userRegister(body).subscribe({
           next: (response) => {
             if (response.statusCode === 201) {
-              this.toasterMessageService.success('Register Successfully', 5000);
-              this.router.navigate(['/auth/login']);
+              this.toasterMessageService.success(
+                `${AUTH_CONST.TOASTER_MESSAGE.REGISTER.SUCCESS}`,
+                5000,
+              );
+              this.router.navigate([`${ROUTES_CONST.AUTH.LOGIN}`]);
             }
           },
           error: (error) => {
             console.log(error);
-            this.toasterMessageService.error('Registration Failed');
+            this.toasterMessageService.error(`${AUTH_CONST.TOASTER_MESSAGE.REGISTER.FAILED}`);
           },
         });
       },
