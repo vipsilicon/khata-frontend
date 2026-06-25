@@ -24,9 +24,7 @@ export class DashboardLayoutComponent implements OnInit {
   ngOnInit(): void {
     this.apiService.get(`${API_CONFIG.PROFILE.FETCH}`, {}).subscribe({
       next: (user) => {},
-      error: (err) => {
-        console.error(err);
-      },
+      error: (err) => {},
     });
   }
 }

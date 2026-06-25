@@ -72,9 +72,7 @@ export class ProfileComponent implements OnInit {
 
           this.imagePreview.set(response.body.avatar);
         },
-        error: (error) => {
-          console.error(error);
-        },
+        error: (error) => {},
       });
   }
 

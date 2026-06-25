@@ -10,6 +10,7 @@ export const API_CONFIG = {
   },
   USER_BANK: {
     LIST: '/user-banks/list',
+    CREATE: '/user-banks/create',
   },
   PROFILE: {
     FETCH: '/users/profile',

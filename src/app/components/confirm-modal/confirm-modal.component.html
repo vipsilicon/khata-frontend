@@ -1,0 +1,22 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+  <div class="w-full max-w-md bg-white shadow-2xl">
+    <div class="bg-cyan-700 text-white px-6 py-4">
+      <h2 class="text-lg font-semibold">{{ title }}</h2>
+    </div>
+    <div class="p-6"><ng-content></ng-content></div>
+    <div class="flex justify-end items-center border-t border-cyan-700 px-6 py-2 gap-4">
+      <button
+        class="px-4 py-2 border-0 bg-gray-500 text-white rounded-lg hover:bg-gray-700 cursor-pointer"
+        (click)="onCancel()"
+      >
+        {{ cancelButtonText }}
+      </button>
+      <button
+        class="px-4 py-2 border-0 bg-green-500 text-white rounded-lg hover:bg-green-700 cursor-pointer"
+        (click)="onConfirm()"
+      >
+        {{ confirmButtonText }}
+      </button>
+    </div>
+  </div>
+</div>
