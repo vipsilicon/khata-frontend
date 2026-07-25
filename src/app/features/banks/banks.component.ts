@@ -1,5 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ElementRef, ViewChild, signal, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ElementRef,
+  ViewChild,
+  signal,
+  inject,
+  computed,
+} from '@angular/core';
 import { finalize } from 'rxjs';
 import {
   LucideAngularModule,
@@ -8,6 +16,9 @@ import {
   Plus,
   SquarePen,
   Trash2,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
 } from 'lucide-angular';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -42,6 +53,21 @@ interface CreateUserBank {
   bankId: number;
   initialAmount: number;
 }
+
+interface BankTransaction {
+  id: number;
+  referenceId: string;
+  userBankId: number;
+  transactionType: string;
+  amount: string;
+  transactionDateTime: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+type BankTxSortKey = keyof BankTransaction;
+type SortDir = 'asc' | 'desc';
+
 @Component({
   selector: 'app-banks.component',
   imports: [LucideAngularModule, CommonModule, ReactiveFormsModule, ConfirmModalComponent],
@@ -60,6 +86,9 @@ export class BanksComponent implements OnInit {
   plus = Plus;
   squarePen = SquarePen;
   trash = Trash2;
+  arrowUp = ArrowUp;
+  arrowDown = ArrowDown;
+  arrowUpDown = ArrowUpDown;
 
   loading = signal<boolean>(true);
   uploading = signal<boolean>(false);
@@ -73,9 +102,52 @@ export class BanksComponent implements OnInit {
   editBank = signal<Bank | null>(null);
   deleteBank = signal<Bank | null>(null);
 
+  // Bank transactions
+  readonly txLimit = 10;
+  selectedUserBankId = signal<number | null>(null);
+  bankTransactions = signal<BankTransaction[]>([]);
+  txLoading = signal<boolean>(false);
+  txLoadingMore = signal<boolean>(false);
+  txPage = signal<number>(1);
+  txLastPage = signal<number>(1);
+  txTotal = signal<number>(0);
+  txSortKey = signal<BankTxSortKey>('transactionDateTime');
+  txSortDir = signal<SortDir>('desc');
+
+  sortedBankTransactions = computed(() => {
+    const list = [...this.bankTransactions()];
+    const key = this.txSortKey();
+    const dir = this.txSortDir();
+
+    return list.sort((a, b) => {
+      let av: string | number = a[key] ?? '';
+      let bv: string | number = b[key] ?? '';
+
+      if (key === 'amount' || key === 'id' || key === 'userBankId') {
+        av = Number(av);
+        bv = Number(bv);
+      } else if (key === 'transactionDateTime' || key === 'createdAt' || key === 'updatedAt') {
+        av = new Date(String(av)).getTime();
+        bv = new Date(String(bv)).getTime();
+      } else {
+        av = String(av).toLowerCase();
+        bv = String(bv).toLowerCase();
+      }
+
+      if (av < bv) {
+        return dir === 'asc' ? -1 : 1;
+      }
+      if (av > bv) {
+        return dir === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+  });
+
+  txHasMore = computed(() => this.txPage() < this.txLastPage());
+
   ngOnInit(): void {
     this.loadUserBanks();
-
     this.loadBankLists();
   }
 
@@ -124,21 +196,156 @@ export class BanksComponent implements OnInit {
       )
       .subscribe({
         next: (response: any) => {
-          this.banks.set(
-            response.body.data.map((item: any) => {
-              return {
-                id: item.id,
-                name: item.bankName,
-                code: item.bankCode,
-                icon: item.bankIcon,
-                initialAmount: item.initialAmount,
-                balance: item.balance,
-              };
-            }),
-          );
+          const mapped: Bank[] = response.body.data.map((item: any) => {
+            return {
+              id: item.id,
+              name: item.bankName,
+              code: item.bankCode,
+              icon: item.bankIcon,
+              initialAmount: item.initialAmount,
+              balance: item.balance,
+            };
+          });
+
+          this.banks.set(mapped);
+
+          if (mapped.length > 0) {
+            const current = this.selectedUserBankId();
+            const stillExists = mapped.some((b) => b.id === current);
+            const nextId = stillExists && current != null ? current : mapped[0].id;
+            this.selectedUserBankId.set(nextId);
+            this.loadBankTransactions(true);
+          } else {
+            this.selectedUserBankId.set(null);
+            this.bankTransactions.set([]);
+            this.txTotal.set(0);
+            this.txPage.set(1);
+            this.txLastPage.set(1);
+          }
         },
         error: (error) => {},
       });
+  }
+
+  selectBankTab(bank: Bank): void {
+    if (this.selectedUserBankId() === bank.id) {
+      return;
+    }
+    this.selectedUserBankId.set(bank.id);
+    this.loadBankTransactions(true);
+  }
+
+  loadBankTransactions(reset = false): void {
+    const userBankId = this.selectedUserBankId();
+    if (userBankId == null) {
+      return;
+    }
+
+    if (this.txLoading() || this.txLoadingMore()) {
+      return;
+    }
+
+    if (!reset && this.txPage() > this.txLastPage()) {
+      return;
+    }
+
+    if (reset) {
+      this.txPage.set(1);
+      this.txLoading.set(true);
+      this.bankTransactions.set([]);
+    } else {
+      this.txLoadingMore.set(true);
+    }
+
+    const currentPage = this.txPage();
+
+    this.apiService
+      .get(`${API_CONFIG.BANK_TRANSACTION.LIST}`, {
+        page: currentPage,
+        limit: this.txLimit,
+        userBankId,
+      })
+      .pipe(
+        finalize(() => {
+          this.txLoading.set(false);
+          this.txLoadingMore.set(false);
+        }),
+      )
+      .subscribe({
+        next: (response: any) => {
+          // Ignore stale responses if tab changed while request was in flight
+          if (this.selectedUserBankId() !== userBankId) {
+            return;
+          }
+
+          const body = response?.body ?? {};
+          const data: BankTransaction[] = (body.data ?? []).map((item: any) => ({
+            id: item.id,
+            referenceId: item.referenceId,
+            userBankId: item.userBankId,
+            transactionType: item.transactionType,
+            amount: item.amount,
+            transactionDateTime: item.transactionDateTime,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
+          }));
+
+          if (reset) {
+            this.bankTransactions.set(data);
+          } else {
+            this.bankTransactions.update((prev) => [...prev, ...data]);
+          }
+
+          this.txTotal.set(body.total ?? data.length);
+          this.txLastPage.set(body.lastPage ?? 1);
+        },
+        error: () => {
+          this.toasterMessageService.error('Failed to load bank transactions');
+        },
+      });
+  }
+
+  onTxScroll(event: Event): void {
+    const el = event.target as HTMLElement;
+    const threshold = 80;
+
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - threshold) {
+      this.loadMoreBankTransactions();
+    }
+  }
+
+  loadMoreBankTransactions(): void {
+    if (this.txLoading() || this.txLoadingMore() || !this.txHasMore()) {
+      return;
+    }
+
+    this.txPage.update((p) => p + 1);
+    this.loadBankTransactions(false);
+  }
+
+  toggleTxSort(key: BankTxSortKey): void {
+    if (this.txSortKey() === key) {
+      this.txSortDir.update((dir) => (dir === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+
+    this.txSortKey.set(key);
+    this.txSortDir.set('asc');
+  }
+
+  txSortIcon(key: BankTxSortKey) {
+    if (this.txSortKey() !== key) {
+      return this.arrowUpDown;
+    }
+    return this.txSortDir() === 'asc' ? this.arrowUp : this.arrowDown;
+  }
+
+  typeBadgeClass(type: string): string {
+    return type === 'CREDIT'
+      ? 'bg-emerald-100 text-emerald-700'
+      : type === 'DEBIT'
+        ? 'bg-rose-100 text-rose-700'
+        : 'bg-gray-100 text-gray-700';
   }
 
   @ViewChild('scrollContainer')

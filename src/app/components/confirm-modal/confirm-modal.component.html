@@ -1,17 +1,31 @@
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-  <div class="w-full max-w-md bg-white shadow-2xl">
-    <div class="bg-cyan-700 text-white px-6 py-4">
+<div
+  class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+>
+  <div
+    class="w-full bg-white shadow-2xl rounded-sm flex flex-col max-h-[90vh]"
+    [ngClass]="panelClass"
+    [style]="panelStyle"
+  >
+    <div class="bg-cyan-700 text-white px-6 py-4 shrink-0">
       <h2 class="text-lg font-semibold">{{ title }}</h2>
     </div>
-    <div class="p-6"><ng-content></ng-content></div>
-    <div class="flex justify-end items-center border-t border-cyan-700 px-6 py-2 gap-4">
+
+    <div class="p-6 overflow-y-auto min-h-0 flex-1">
+      <ng-content></ng-content>
+    </div>
+
+    <div
+      class="flex justify-end items-center border-t border-cyan-700 px-6 py-2 gap-4 shrink-0"
+    >
       <button
+        type="button"
         class="px-4 py-2 border-0 bg-gray-500 text-white rounded-lg hover:bg-gray-700 cursor-pointer"
         (click)="onCancel()"
       >
         {{ cancelButtonText }}
       </button>
       <button
+        type="button"
         class="px-4 py-2 border-0 bg-green-500 text-white rounded-lg hover:bg-green-700 cursor-pointer"
         (click)="onConfirm()"
       >

@@ -1,1 +1,96 @@
-<p>cash.component works!</p>
+<div class="p-6">
+  <div class="flex justify-between items-center mb-5">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-700">Cash</h2>
+      <p class="text-gray-500 text-sm">
+        Cash transactions
+        @if (total() > 0) {
+          <span>— {{ cashTransactions().length }} of {{ total() }} loaded</span>
+        }
+      </p>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    @if (loading() && cashTransactions().length === 0) {
+      <div class="flex items-center justify-center py-20 text-gray-500">
+        Loading cash transactions…
+      </div>
+    } @else if (!loading() && cashTransactions().length === 0) {
+      <div class="flex items-center justify-center py-20 text-gray-500">
+        No cash transactions found
+      </div>
+    } @else {
+      <div class="overflow-auto max-h-[calc(100vh-12rem)]" (scroll)="onScroll($event)">
+        <table class="w-full text-sm text-left border-collapse">
+          <thead class="sticky top-0 z-10 bg-cyan-800 text-white">
+            <tr>
+              <th
+                class="px-4 py-3 font-semibold whitespace-nowrap cursor-pointer select-none"
+                (click)="toggleSort('transactionDateTime')"
+              >
+                <span class="inline-flex items-center gap-1">
+                  Date & Time
+                  <lucide-icon
+                    [img]="sortIcon('transactionDateTime')"
+                    class="w-3.5 h-3.5 opacity-80"
+                  ></lucide-icon>
+                </span>
+              </th>
+              <th
+                class="px-4 py-3 font-semibold whitespace-nowrap cursor-pointer select-none"
+                (click)="toggleSort('transactionType')"
+              >
+                <span class="inline-flex items-center gap-1">
+                  Type
+                  <lucide-icon
+                    [img]="sortIcon('transactionType')"
+                    class="w-3.5 h-3.5 opacity-80"
+                  ></lucide-icon>
+                </span>
+              </th>
+              <th
+                class="px-4 py-3 font-semibold whitespace-nowrap cursor-pointer select-none"
+                (click)="toggleSort('amount')"
+              >
+                <span class="inline-flex items-center gap-1">
+                  Amount
+                  <lucide-icon
+                    [img]="sortIcon('amount')"
+                    class="w-3.5 h-3.5 opacity-80"
+                  ></lucide-icon>
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (tx of sortedCashTransactions(); track tx.id) {
+              <tr class="border-b border-gray-100 hover:bg-cyan-50/60 transition-colors">
+                <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
+                  {{ tx.transactionDateTime | date: 'dd MMM yyyy, hh:mm a' }}
+                </td>
+                <td class="px-4 py-3">
+                  <span
+                    class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold"
+                    [ngClass]="typeBadgeClass(tx.transactionType)"
+                  >
+                    {{ tx.transactionType }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">
+                  ₹ {{ tx.amount | number: '1.2-2' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        @if (loadingMore()) {
+          <div class="py-4 text-center text-sm text-gray-500">Loading more…</div>
+        } @else if (!hasMore() && cashTransactions().length > 0) {
+          <div class="py-4 text-center text-sm text-gray-400">All cash transactions loaded</div>
+        }
+      </div>
+    }
+  </div>
+</div>

@@ -48,4 +48,8 @@ export class SideBarComponent {
   debtPage() {
     this.router.navigate([`${ROUTES_CONST.DEBT.MAIN_PAGE}`]);
   }
+
+  groceriesPage() {
+    this.router.navigate([`${ROUTES_CONST.GROCERIES.MAIN_PAGE}`]);
+  }
 }

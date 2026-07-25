@@ -26,4 +26,7 @@ export const ROUTES_CONST = {
   DEBT: {
     MAIN_PAGE: '/debt',
   },
+  GROCERIES: {
+    MAIN_PAGE: '/groceries',
+  },
 };
