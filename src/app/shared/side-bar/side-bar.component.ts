@@ -25,6 +25,10 @@ export class SideBarComponent {
     this.router.navigate([`${ROUTES_CONST.BANKS.MAIN_PAGE}`]);
   }
 
+  cashPage() {
+    this.router.navigate([`${ROUTES_CONST.CASH.MAIN_PAGE}`]);
+  }
+
   investmentsPage() {
     this.router.navigate([`${ROUTES_CONST.INVESTMENTS.MAIN_PAGE}`]);
   }
@@ -39,5 +43,9 @@ export class SideBarComponent {
 
   settingsPage() {
     this.router.navigate([`${ROUTES_CONST.SETTINGS.MAIN_PAGE}`]);
+  }
+
+  debtPage() {
+    this.router.navigate([`${ROUTES_CONST.DEBT.MAIN_PAGE}`]);
   }
 }

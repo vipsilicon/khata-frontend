@@ -1,1 +1,10 @@
-<p>dashboard.component works!</p>
+<div class="grid grid-cols-5 gap-3 p-4">
+  @for (item of list(); track item.id) {
+    <app-dash-card [title]="item.title" [icon]="item.icon" [balance]="item.balance"></app-dash-card>
+  }
+</div>
+
+<div class="grid grid-cols-5 gap-3 p-4 mt-5 border-t border-cyan-800">
+  <app-dash-chart class="col-span-4"></app-dash-chart>
+  <app-agenda></app-agenda>
+</div>

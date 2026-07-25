@@ -1,0 +1,10 @@
+<div class="border border-0 bg-cyan-500 px-10 py-2 rounded-lg text-white flex flex-col">
+  <div class="flex items-center gap-3 justify-between">
+    <lucide-icon [img]="icon" class="w-15 h-15 text-cyan-950"></lucide-icon>
+    <h3 class="font-semibold text-2xl">{{ title }}</h3>
+  </div>
+  <div class="grid grid-cols-2 border-t border-cyan-800 mt-2 pt-2">
+    <p class="font-bold text-cyan-900">Amount</p>
+    <p class="font-bold flex justify-end">{{ balance | currency: 'INR' }}</p>
+  </div>
+</div>

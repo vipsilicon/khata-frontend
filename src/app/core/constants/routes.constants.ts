@@ -8,6 +8,9 @@ export const ROUTES_CONST = {
   BANKS: {
     MAIN_PAGE: '/banks',
   },
+  CASH: {
+    MAIN_PAGE: '/cash',
+  },
   INVESTMENTS: {
     MAIN_PAGE: '/investments',
   },
@@ -19,5 +22,8 @@ export const ROUTES_CONST = {
   },
   TRANSACTIONS: {
     MAIN_PAGE: '/transactions',
+  },
+  DEBT: {
+    MAIN_PAGE: '/debt',
   },
 };
