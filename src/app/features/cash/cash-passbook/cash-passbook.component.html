@@ -1,0 +1,230 @@
+<div class="flex justify-between items-center mb-4">
+  <p class="text-gray-500 text-sm">
+    Cash transactions
+    @if (total() > 0) {
+      <span>— {{ cashTransactions().length }} of {{ total() }} loaded</span>
+    }
+  </p>
+
+  <button
+    type="button"
+    class="bg-cyan-700 hover:bg-cyan-600 cursor-pointer px-4 py-2 rounded text-white"
+    (click)="onAddCashTransaction()"
+  >
+    Add Cash Transaction
+  </button>
+</div>
+
+<app-data-table
+  [columns]="columns"
+  [rows]="sortedCashTransactions()"
+  [loading]="loading()"
+  [loadingMore]="loadingMore()"
+  [hasMore]="hasMore()"
+  [infiniteScroll]="true"
+  [sortKey]="sortKey()"
+  [sortDir]="sortDir()"
+  loadingText="Loading cash transactions…"
+  emptyText="No cash transactions found"
+  allLoadedText="All cash transactions loaded"
+  (sortChange)="toggleSort($event)"
+  (edit)="onEditCashTransaction($event)"
+  (delete)="onDeleteCashTransaction($event)"
+  (scrolled)="onScroll($event)"
+/>
+
+@if (showAddModal()) {
+  <app-confirm-modal
+    title="Add Cash Transaction"
+    confirmButtonText="Add"
+    cancelButtonText="Cancel"
+    size="lg"
+    (confirm)="confirmAddModal()"
+    (cancel)="cancelAddModal()"
+  >
+    <form [formGroup]="addForm" class="grid grid-cols-1 sm:grid-cols-2">
+      <app-form-input
+        label="Date & Time"
+        type="datetime-local"
+        [control]="addForm.controls.transactionDateTime"
+        [errorMessages]="{ required: CASH_C.VALIDATION.DATE_REQUIRED }"
+      />
+
+      <app-form-select
+        label="Payee Name"
+        [control]="addForm.controls.payeeId"
+        placeholder="Select payee"
+        [emptyValue]="0"
+        [options]="payeeOptions()"
+        [errorMessages]="{
+          required: CASH_C.VALIDATION.PAYEE_REQUIRED,
+          min: CASH_C.VALIDATION.PAYEE_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Purpose"
+        [control]="addForm.controls.purpose"
+        placeholder="Select purpose"
+        [options]="purposeOptions()"
+        [errorMessages]="{ required: CASH_C.VALIDATION.PURPOSE_REQUIRED }"
+      />
+
+      <app-form-select
+        label="Category"
+        [control]="addForm.controls.categoryId"
+        placeholder="Select category"
+        [emptyValue]="0"
+        [options]="categoryOptions()"
+        [errorMessages]="{
+          required: CASH_C.VALIDATION.CATEGORY_REQUIRED,
+          min: CASH_C.VALIDATION.CATEGORY_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Sub Category"
+        [control]="addForm.controls.subCategoryId"
+        placeholder="Select sub category"
+        [emptyValue]="0"
+        [options]="subCategoryOptions()"
+        [errorMessages]="{
+          required: CASH_C.VALIDATION.SUB_CATEGORY_REQUIRED,
+          min: CASH_C.VALIDATION.SUB_CATEGORY_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Type"
+        [control]="addForm.controls.transactionType"
+        placeholder="Select type"
+        [options]="transactionTypeOptions"
+        [errorMessages]="{ required: CASH_C.VALIDATION.TYPE_REQUIRED }"
+      />
+
+      <app-form-input
+        label="Amount"
+        type="number"
+        [control]="addForm.controls.amount"
+        placeholder="Amount"
+        [min]="0.01"
+        [step]="0.01"
+        [errorMessages]="{
+          required: CASH_C.VALIDATION.AMOUNT_INVALID,
+          min: CASH_C.VALIDATION.AMOUNT_INVALID,
+        }"
+      />
+    </form>
+  </app-confirm-modal>
+}
+
+@if (showEditModal()) {
+  <app-confirm-modal
+    title="Edit Cash Transaction"
+    confirmButtonText="Update"
+    cancelButtonText="Cancel"
+    size="lg"
+    (confirm)="confirmEditModal()"
+    (cancel)="cancelEditModal()"
+  >
+    <form [formGroup]="editForm" class="grid grid-cols-1 sm:grid-cols-2">
+      <app-form-input
+        label="Date & Time"
+        type="datetime-local"
+        [control]="editForm.controls.transactionDateTime"
+        [errorMessages]="{ required: CASH_C.VALIDATION.DATE_REQUIRED }"
+      />
+
+      <app-form-select
+        label="Payee Name"
+        [control]="editForm.controls.payeeId"
+        placeholder="Select payee"
+        [emptyValue]="0"
+        [options]="payeeOptions()"
+        [errorMessages]="{
+          required: CASH_C.VALIDATION.PAYEE_REQUIRED,
+          min: CASH_C.VALIDATION.PAYEE_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Purpose"
+        [control]="editForm.controls.purpose"
+        placeholder="Select purpose"
+        [options]="purposeOptions()"
+        [errorMessages]="{ required: CASH_C.VALIDATION.PURPOSE_REQUIRED }"
+      />
+
+      <app-form-select
+        label="Category"
+        [control]="editForm.controls.categoryId"
+        placeholder="Select category"
+        [emptyValue]="0"
+        [options]="categoryOptions()"
+        [errorMessages]="{
+          required: CASH_C.VALIDATION.CATEGORY_REQUIRED,
+          min: CASH_C.VALIDATION.CATEGORY_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Sub Category"
+        [control]="editForm.controls.subCategoryId"
+        placeholder="Select sub category"
+        [emptyValue]="0"
+        [options]="subCategoryOptions()"
+        [errorMessages]="{
+          required: CASH_C.VALIDATION.SUB_CATEGORY_REQUIRED,
+          min: CASH_C.VALIDATION.SUB_CATEGORY_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Type"
+        [control]="editForm.controls.transactionType"
+        placeholder="Select type"
+        [options]="transactionTypeOptions"
+        [errorMessages]="{ required: CASH_C.VALIDATION.TYPE_REQUIRED }"
+      />
+
+      <app-form-input
+        label="Amount"
+        type="number"
+        [control]="editForm.controls.amount"
+        placeholder="Amount"
+        [min]="0.01"
+        [step]="0.01"
+        [errorMessages]="{
+          required: CASH_C.VALIDATION.AMOUNT_INVALID,
+          min: CASH_C.VALIDATION.AMOUNT_INVALID,
+        }"
+      />
+    </form>
+  </app-confirm-modal>
+}
+
+@if (showDeleteModal()) {
+  <app-confirm-modal
+    title="Delete Cash Transaction"
+    confirmButtonText="Delete"
+    cancelButtonText="Cancel"
+    (confirm)="confirmDeleteModal()"
+    (cancel)="cancelDeleteModal()"
+  >
+    <div class="px-5 py-2 space-y-3">
+      <p class="text-gray-700">
+        <span class="font-semibold">{{ deleteTransaction()?.transactionType }}</span>
+        @if (deleteTransaction()?.amount) {
+          <span class="text-gray-500"> — ₹ {{ deleteTransaction()?.amount }}</span>
+        }
+        @if (deleteTransaction()?.payeeName) {
+          <span class="text-gray-500"> ({{ deleteTransaction()?.payeeName }})</span>
+        }
+        @if (deleteTransaction()?.purpose) {
+          <span class="text-gray-500"> · {{ deleteTransaction()?.purpose }}</span>
+        }
+      </p>
+      <p class="text-lg font-semibold text-center">{{ CASH_C.MODAL.DELETE }}</p>
+    </div>
+  </app-confirm-modal>
+}

@@ -1,0 +1,130 @@
+<div class="mb-4">
+  <h3 class="text-xl font-bold text-gray-700">Bank Transactions</h3>
+  <p class="text-gray-500 text-sm">
+    Passbook for the selected bank account
+    @if (txTotal() > 0) {
+      <span>— {{ bankTransactions().length }} of {{ txTotal() }} loaded</span>
+    }
+  </p>
+  <!-- Note: one user can have multiple bank accounts -->
+  <p class="text-xs text-amber-700/90 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-2">
+    <span class="font-semibold">Note:</span>
+    You may have multiple banks. Each tab below is a separate bank account —
+    select a bank to view only that account’s transactions.
+    @if (cardsVisible()) {
+      You can also click a bank card above, or use
+      <span class="font-medium">Hide banks</span> for more table space.
+    }
+  </p>
+</div>
+
+@if (banks().length === 0) {
+  <div
+    class="bg-white rounded-2xl shadow-sm border border-gray-100 py-12 text-center text-gray-500"
+  >
+    Add a bank account to view bank transactions
+  </div>
+} @else {
+  <!-- Per-bank tabs (always available — critical when cards are hidden) -->
+  <div class="flex gap-2 overflow-x-auto pb-2 mb-4" style="scrollbar-width: thin">
+    @for (bank of banks(); track bank.id) {
+      <button
+        type="button"
+        (click)="onSelectBank(bank)"
+        class="shrink-0 px-4 py-2 rounded-t-lg border-b-2 text-sm font-semibold transition cursor-pointer"
+        [ngClass]="
+          selectedUserBankId() === bank.id
+            ? 'border-cyan-700 text-cyan-800 bg-white'
+            : 'border-transparent text-gray-500 hover:text-cyan-700 hover:bg-white/60'
+        "
+      >
+        {{ bank.name }}
+        <span class="ml-1 text-xs font-normal text-gray-400">
+          (₹ {{ bank.balance | number: '1.0-0' }})
+        </span>
+      </button>
+    }
+  </div>
+
+  <app-data-table
+    [columns]="bankTxColumns"
+    [rows]="sortedBankTransactions()"
+    [loading]="txLoading()"
+    [loadingMore]="txLoadingMore()"
+    [hasMore]="txHasMore()"
+    [infiniteScroll]="true"
+    [sortKey]="txSortKey()"
+    [sortDir]="txSortDir()"
+    [maxHeightClass]="tableMaxHeightClass()"
+    loadingText="Loading bank transactions…"
+    emptyText="No bank transactions found"
+    allLoadedText="All bank transactions loaded"
+    (sortChange)="toggleTxSort($event)"
+    (edit)="onEditBankTransaction($event)"
+    (delete)="onDeleteBankTransaction($event)"
+    (scrolled)="onTxScroll($event)"
+  />
+}
+
+@if (showEditTxModal()) {
+  <app-confirm-modal
+    title="Edit Bank Transaction"
+    confirmButtonText="Update"
+    cancelButtonText="Cancel"
+    size="lg"
+    (confirm)="confirmEditTxModal()"
+    (cancel)="cancelEditTxModal()"
+  >
+    <form [formGroup]="editTxForm" class="grid grid-cols-1 sm:grid-cols-2">
+      <app-form-input
+        label="Date & Time"
+        type="datetime-local"
+        [control]="editTxForm.controls.transactionDateTime"
+        [errorMessages]="{ required: BANKS_C.VALIDATION.TX.DATE_REQUIRED }"
+      />
+
+      <app-form-select
+        label="Type"
+        [control]="editTxForm.controls.transactionType"
+        placeholder="Select type"
+        [options]="transactionTypeOptions"
+        [errorMessages]="{ required: BANKS_C.VALIDATION.TX.TYPE_REQUIRED }"
+      />
+
+      <div class="sm:col-span-2">
+        <app-form-input
+          label="Amount"
+          type="number"
+          [control]="editTxForm.controls.amount"
+          placeholder="Amount"
+          [min]="0"
+          [step]="0.01"
+          [errorMessages]="{
+            required: BANKS_C.VALIDATION.TX.AMOUNT_INVALID,
+            min: BANKS_C.VALIDATION.TX.AMOUNT_INVALID,
+          }"
+        />
+      </div>
+    </form>
+  </app-confirm-modal>
+}
+
+@if (showDeleteTxModal()) {
+  <app-confirm-modal
+    title="Delete Bank Transaction"
+    confirmButtonText="Delete"
+    cancelButtonText="Cancel"
+    (confirm)="confirmDeleteTxModal()"
+    (cancel)="cancelDeleteTxModal()"
+  >
+    <div class="px-5 py-2 space-y-3">
+      <p class="text-gray-700">
+        <span class="font-semibold">{{ deleteBankTransaction()?.transactionType }}</span>
+        @if (deleteBankTransaction()?.amount) {
+          <span class="text-gray-500"> — ₹ {{ deleteBankTransaction()?.amount }}</span>
+        }
+      </p>
+      <p class="text-lg font-semibold text-center">{{ BANKS_C.MODAL.DELETE_TX }}</p>
+    </div>
+  </app-confirm-modal>
+}

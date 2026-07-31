@@ -19,11 +19,15 @@ export const API_CONFIG = {
   },
   TRANSACTION: {
     LIST: '/transactions/list',
+    PURPOSE_TYPE_LIST: '/transactions/purpose-type-list',
+    CREATE: '/transactions/create',
+    UPDATE: '/transactions/update',
     DELETE: '/transactions/delete',
   },
   CASH_TRANSACTION: {
     LIST: '/cash-transaction/list',
     TOTAL: '/cash-transaction/total',
+    CREATE: '/cash-transaction/create',
     UPDATE: '/cash-transaction/update',
     DELETE: '/cash-transaction/delete',
   },
@@ -34,6 +38,8 @@ export const API_CONFIG = {
   },
   INVESTMENT: {
     LIST: '/investments/list',
+    TYPE_LIST: '/investments/type-list',
+    CREATE: '/investments/create',
     UPDATE: '/investments/update',
     DELETE: '/investments/delete',
   },
@@ -43,5 +49,11 @@ export const API_CONFIG = {
     CREATE: '/payee/create',
     UPDATE: '/payee',
     DELETE: '/payee',
+  },
+  CATEGORY: {
+    LIST: '/category/list',
+  },
+  SUB_CATEGORY: {
+    LIST: '/sub-category/list',
   },
 };

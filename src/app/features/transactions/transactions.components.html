@@ -2,140 +2,40 @@
   <div class="flex justify-between items-center mb-5">
     <div>
       <h2 class="text-2xl font-bold text-gray-700">Transactions</h2>
-      <p class="text-gray-500 text-sm">
-        All transactions
-        @if (total() > 0) {
-          <span>— {{ transactions().length }} of {{ total() }} loaded</span>
-        }
-      </p>
+      <p class="text-gray-500 text-sm">Manage transaction passbook and analysis</p>
     </div>
+  </div>
 
-    <button class="bg-cyan-700 hover:bg-cyan-700 cursor-pointer px-4 py-2 rounded text-white">
-      Add Transaction
+  <div class="flex gap-2 overflow-x-auto pb-2 mb-4" style="scrollbar-width: thin">
+    <button
+      type="button"
+      (click)="selectTab('passbook')"
+      class="shrink-0 px-4 py-2 rounded-t-lg border-b-2 text-sm font-semibold transition cursor-pointer"
+      [ngClass]="
+        selectedTab() === 'passbook'
+          ? 'border-cyan-700 text-cyan-800 bg-white'
+          : 'border-transparent text-gray-500 hover:text-cyan-700 hover:bg-white/60'
+      "
+    >
+      Passbook
+    </button>
+    <button
+      type="button"
+      (click)="selectTab('analysis')"
+      class="shrink-0 px-4 py-2 rounded-t-lg border-b-2 text-sm font-semibold transition cursor-pointer"
+      [ngClass]="
+        selectedTab() === 'analysis'
+          ? 'border-cyan-700 text-cyan-800 bg-white'
+          : 'border-transparent text-gray-500 hover:text-cyan-700 hover:bg-white/60'
+      "
+    >
+      Analysis
     </button>
   </div>
 
-  <app-data-table
-    [columns]="columns"
-    [rows]="sortedTransactions()"
-    [loading]="loading()"
-    [loadingMore]="loadingMore()"
-    [hasMore]="hasMore()"
-    [infiniteScroll]="true"
-    [sortKey]="sortKey()"
-    [sortDir]="sortDir()"
-    loadingText="Loading transactions…"
-    emptyText="No transactions found"
-    allLoadedText="All transactions loaded"
-    (sortChange)="toggleSort($event)"
-    (edit)="onEditTransaction($event)"
-    (delete)="onDeleteTransaction($event)"
-    (scrolled)="onScroll($event)"
-  />
+  @if (selectedTab() === 'passbook') {
+    <app-transaction-passbook />
+  } @else if (selectedTab() === 'analysis') {
+    <app-transaction-analysis />
+  }
 </div>
-
-@if (showEditModal()) {
-  <app-confirm-modal
-    title="Edit Transaction"
-    confirmButtonText="Update"
-    cancelButtonText="Cancel"
-    size="lg"
-    (confirm)="confirmEditModal()"
-    (cancel)="cancelEditModal()"
-  >
-    <form [formGroup]="editForm" class="grid grid-cols-1 sm:grid-cols-2">
-      <app-form-input
-        label="Date & Time"
-        type="datetime-local"
-        [control]="editForm.controls.transactionDateTime"
-        [errorMessages]="{ required: 'Date & time is required' }"
-      />
-
-      <app-form-select
-        label="Type"
-        [control]="editForm.controls.transactionType"
-        placeholder="Select type"
-        [options]="transactionTypeOptions"
-        [errorMessages]="{ required: 'Type is required' }"
-      />
-
-      <app-form-select
-        label="Payment Mode"
-        [control]="editForm.controls.paymentMode"
-        placeholder="Select payment mode"
-        [options]="paymentModeOptions"
-        [errorMessages]="{ required: 'Payment mode is required' }"
-      />
-
-      <app-form-input
-        label="Purpose"
-        [control]="editForm.controls.purpose"
-        placeholder="Purpose"
-        [errorMessages]="{ required: 'Purpose is required' }"
-      />
-
-      <app-form-input
-        label="Category"
-        [control]="editForm.controls.categoryName"
-        placeholder="Category"
-        [errorMessages]="{ required: 'Category is required' }"
-      />
-
-      <app-form-input
-        label="Sub Category"
-        [control]="editForm.controls.subCategoryName"
-        placeholder="Sub category"
-      />
-
-      <app-form-input
-        label="Payee"
-        [control]="editForm.controls.payeeName"
-        placeholder="Payee name"
-      />
-
-      <app-form-input
-        label="Payee Category"
-        [control]="editForm.controls.payeeCategory"
-        placeholder="Payee category"
-      />
-
-      <div class="sm:col-span-2">
-        <app-form-input
-          label="Amount"
-          type="number"
-          [control]="editForm.controls.amount"
-          placeholder="Amount"
-          [min]="0"
-          [step]="0.01"
-          [errorMessages]="{
-            required: 'Enter a valid amount',
-            min: 'Enter a valid amount',
-          }"
-        />
-      </div>
-    </form>
-  </app-confirm-modal>
-}
-
-@if (showDeleteModal()) {
-  <app-confirm-modal
-    title="Delete Transaction"
-    confirmButtonText="Delete"
-    cancelButtonText="Cancel"
-    (confirm)="confirmDeleteModal()"
-    (cancel)="cancelDeleteModal()"
-  >
-    <div class="px-5 py-2 space-y-3">
-      <p class="text-gray-700">
-        <span class="font-semibold">{{ deleteTransaction()?.transactionType }}</span>
-        @if (deleteTransaction()?.amount) {
-          <span class="text-gray-500"> — ₹ {{ deleteTransaction()?.amount }}</span>
-        }
-        @if (deleteTransaction()?.purpose) {
-          <span class="text-gray-500"> ({{ deleteTransaction()?.purpose }})</span>
-        }
-      </p>
-      <p class="text-lg font-semibold text-center">{{ TX_C.MODAL.DELETE }}</p>
-    </div>
-  </app-confirm-modal>
-}

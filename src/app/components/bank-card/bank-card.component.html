@@ -1,4 +1,14 @@
-<div class="snap-start shrink-0 w-80 rounded-2xl bg-white shadow-sm hover:shadow-xl transition">
+<div
+  role="button"
+  tabindex="0"
+  (click)="onSelect()"
+  (keydown.enter)="onSelect()"
+  (keydown.space)="$event.preventDefault(); onSelect()"
+  class="bank-card snap-start shrink-0 w-80 rounded-2xl bg-white cursor-pointer outline-none transition-all duration-200 ease-out"
+  [class.bank-card--selected]="selected"
+  [attr.aria-pressed]="selected"
+  [title]="selected ? 'Selected bank' : 'Select this bank'"
+>
   <div class="p-5">
     <div class="flex items-center gap-3">
       @if (bank.icon) {

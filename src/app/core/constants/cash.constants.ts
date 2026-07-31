@@ -4,6 +4,10 @@ export const CASH_CONST = {
     LOAD: {
       FAILED: 'Failed to load cash transactions',
     },
+    CREATE: {
+      SUCCESS: 'Cash transaction added successfully',
+      FAILED: 'Failed to add cash transaction',
+    },
     UPDATE: {
       SUCCESS: 'Cash transaction updated successfully',
       FAILED: 'Failed to update cash transaction',
@@ -16,7 +20,11 @@ export const CASH_CONST = {
   VALIDATION: {
     DATE_REQUIRED: 'Date & time is required',
     TYPE_REQUIRED: 'Type is required',
-    AMOUNT_INVALID: 'Enter a valid amount',
+    PURPOSE_REQUIRED: 'Purpose is required',
+    CATEGORY_REQUIRED: 'Please select a category',
+    SUB_CATEGORY_REQUIRED: 'Please select a sub category',
+    PAYEE_REQUIRED: 'Please select a payee',
+    AMOUNT_INVALID: 'Enter a valid amount (min 0.01)',
   },
   MODAL: {
     DELETE: 'Are you sure you want to delete this cash transaction?',

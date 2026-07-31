@@ -23,9 +23,16 @@ export class BankCardComponent {
   readonly trash = Trash2;
 
   @Input({ required: true }) bank!: BankCardData;
+  /** Highlight this card when it is the active bank for Passbook. */
+  @Input() selected = false;
 
   @Output() edit = new EventEmitter<BankCardData>();
   @Output() delete = new EventEmitter<BankCardData>();
+  @Output() select = new EventEmitter<BankCardData>();
+
+  onSelect(): void {
+    this.select.emit(this.bank);
+  }
 
   onEdit(event: Event): void {
     event.stopPropagation();

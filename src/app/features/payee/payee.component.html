@@ -2,103 +2,40 @@
   <div class="flex justify-between items-center mb-5">
     <div>
       <h2 class="text-2xl font-bold text-gray-700">Payee</h2>
-      <p class="text-gray-500 text-sm">Manage payees</p>
+      <p class="text-gray-500 text-sm">Manage payee passbook and analysis</p>
     </div>
+  </div>
 
+  <div class="flex gap-2 overflow-x-auto pb-2 mb-4" style="scrollbar-width: thin">
     <button
-      class="bg-cyan-700 hover:bg-cyan-600 cursor-pointer px-4 py-2 rounded text-white"
-      (click)="onAddPayee()"
+      type="button"
+      (click)="selectTab('passbook')"
+      class="shrink-0 px-4 py-2 rounded-t-lg border-b-2 text-sm font-semibold transition cursor-pointer"
+      [ngClass]="
+        selectedTab() === 'passbook'
+          ? 'border-cyan-700 text-cyan-800 bg-white'
+          : 'border-transparent text-gray-500 hover:text-cyan-700 hover:bg-white/60'
+      "
     >
-      Add Payee
+      Passbook
+    </button>
+    <button
+      type="button"
+      (click)="selectTab('analysis')"
+      class="shrink-0 px-4 py-2 rounded-t-lg border-b-2 text-sm font-semibold transition cursor-pointer"
+      [ngClass]="
+        selectedTab() === 'analysis'
+          ? 'border-cyan-700 text-cyan-800 bg-white'
+          : 'border-transparent text-gray-500 hover:text-cyan-700 hover:bg-white/60'
+      "
+    >
+      Analysis
     </button>
   </div>
 
-  <app-data-table
-    [columns]="columns"
-    [rows]="sortedPayees()"
-    [loading]="loadingPayee()"
-    [sortKey]="sortKey()"
-    [sortDir]="sortDir()"
-    loadingText="Loading Payee Records"
-    emptyText="No Payee Record found"
-    (sortChange)="toggleSort($event)"
-    (edit)="onEditPayee($event)"
-    (delete)="onDeletePayee($event)"
-  />
+  @if (selectedTab() === 'passbook') {
+    <app-payee-passbook />
+  } @else if (selectedTab() === 'analysis') {
+    <app-payee-analysis />
+  }
 </div>
-
-@if (showAddPayeeModel()) {
-  <app-confirm-modal
-    title="Add Payee"
-    confirmButtonText="Add"
-    cancelButtonText="Cancel"
-    size="lg"
-    (confirm)="confirmAddPayeeModal()"
-    (cancel)="cancelAddPayeeModal()"
-  >
-    <form [formGroup]="payeeForm">
-      <app-form-input
-        label="Payee Name"
-        [control]="name_payeeForm"
-        placeholder="Enter payee name"
-        [errorMessages]="{ required: PAYEE_C.VALIDATION.NAME_NOT_EMPTY }"
-      />
-
-      <app-form-select
-        label="Payee Category"
-        [control]="payeeCategory_payeeForm"
-        placeholder="Select Payee Category"
-        [options]="payeeCategoryOptions()"
-        [errorMessages]="{ required: PAYEE_C.VALIDATION.SELECT_PAYEE_CATEGORY }"
-      />
-    </form>
-  </app-confirm-modal>
-}
-
-@if (showEditPayeeModal()) {
-  <app-confirm-modal
-    title="Edit Payee"
-    confirmButtonText="Update"
-    cancelButtonText="Cancel"
-    size="lg"
-    (confirm)="confirmEditPayeeModal()"
-    (cancel)="cancelEditPayeeModal()"
-  >
-    <form [formGroup]="editForm">
-      <app-form-input
-        label="Payee Name"
-        [control]="name_editForm"
-        placeholder="Enter payee name"
-        [errorMessages]="{ required: PAYEE_C.VALIDATION.NAME_NOT_EMPTY }"
-      />
-
-      <app-form-select
-        label="Payee Category"
-        [control]="payeeCategory_editForm"
-        placeholder="Select Payee Category"
-        [options]="payeeCategoryOptions()"
-        [errorMessages]="{ required: PAYEE_C.VALIDATION.SELECT_PAYEE_CATEGORY }"
-      />
-    </form>
-  </app-confirm-modal>
-}
-
-@if (showDeletePayeeModal()) {
-  <app-confirm-modal
-    title="Delete Payee"
-    confirmButtonText="Delete"
-    cancelButtonText="Cancel"
-    (confirm)="confirmDeletePayeeModal()"
-    (cancel)="cancelDeletePayeeModal()"
-  >
-    <div class="px-5 py-2 space-y-3">
-      <p class="text-gray-700">
-        <span class="font-semibold">{{ deletePayee()?.name }}</span>
-        @if (deletePayee()?.payeeCategory) {
-          <span class="text-gray-500"> ({{ deletePayee()?.payeeCategory }})</span>
-        }
-      </p>
-      <p class="text-lg font-semibold text-center">{{ PAYEE_C.MODAL.DELETE_PAYEE }}</p>
-    </div>
-  </app-confirm-modal>
-}

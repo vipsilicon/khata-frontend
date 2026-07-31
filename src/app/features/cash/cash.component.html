@@ -2,101 +2,42 @@
   <div class="flex justify-between items-center mb-5">
     <div>
       <h2 class="text-2xl font-bold text-gray-700">Cash</h2>
-      <p class="text-gray-500 text-sm">
-        Cash transactions
-        @if (total() > 0) {
-          <span>— {{ cashTransactions().length }} of {{ total() }} loaded</span>
-        }
-      </p>
+      <p class="text-gray-500 text-sm">Manage cash passbook and analysis</p>
     </div>
 
     <div>Balance: {{ balance() | currency: 'INR' }}</div>
+  </div>
 
-    <button class="bg-cyan-700 hover:bg-cyan-700 cursor-pointer px-4 py-2 rounded text-white">
-      Add Cash Transaction
+  <div class="flex gap-2 overflow-x-auto pb-2 mb-4" style="scrollbar-width: thin">
+    <button
+      type="button"
+      (click)="selectTab('passbook')"
+      class="shrink-0 px-4 py-2 rounded-t-lg border-b-2 text-sm font-semibold transition cursor-pointer"
+      [ngClass]="
+        selectedTab() === 'passbook'
+          ? 'border-cyan-700 text-cyan-800 bg-white'
+          : 'border-transparent text-gray-500 hover:text-cyan-700 hover:bg-white/60'
+      "
+    >
+      Passbook
+    </button>
+    <button
+      type="button"
+      (click)="selectTab('analysis')"
+      class="shrink-0 px-4 py-2 rounded-t-lg border-b-2 text-sm font-semibold transition cursor-pointer"
+      [ngClass]="
+        selectedTab() === 'analysis'
+          ? 'border-cyan-700 text-cyan-800 bg-white'
+          : 'border-transparent text-gray-500 hover:text-cyan-700 hover:bg-white/60'
+      "
+    >
+      Analysis
     </button>
   </div>
 
-  <app-data-table
-    [columns]="columns"
-    [rows]="sortedCashTransactions()"
-    [loading]="loading()"
-    [loadingMore]="loadingMore()"
-    [hasMore]="hasMore()"
-    [infiniteScroll]="true"
-    [sortKey]="sortKey()"
-    [sortDir]="sortDir()"
-    loadingText="Loading cash transactions…"
-    emptyText="No cash transactions found"
-    allLoadedText="All cash transactions loaded"
-    (sortChange)="toggleSort($event)"
-    (edit)="onEditCashTransaction($event)"
-    (delete)="onDeleteCashTransaction($event)"
-    (scrolled)="onScroll($event)"
-  />
+  @if (selectedTab() === 'passbook') {
+    <app-cash-passbook (balanceChange)="onBalanceChange($event)" />
+  } @else if (selectedTab() === 'analysis') {
+    <app-cash-analysis />
+  }
 </div>
-
-@if (showEditModal()) {
-  <app-confirm-modal
-    title="Edit Cash Transaction"
-    confirmButtonText="Update"
-    cancelButtonText="Cancel"
-    size="lg"
-    (confirm)="confirmEditModal()"
-    (cancel)="cancelEditModal()"
-  >
-    <form [formGroup]="editForm" class="grid grid-cols-1 sm:grid-cols-2">
-      <app-form-input
-        label="Date & Time"
-        type="datetime-local"
-        [control]="editForm.controls.transactionDateTime"
-        [errorMessages]="{ required: CASH_C.VALIDATION.DATE_REQUIRED }"
-      />
-
-      <app-form-select
-        label="Type"
-        [control]="editForm.controls.transactionType"
-        placeholder="Select type"
-        [options]="transactionTypeOptions"
-        [errorMessages]="{ required: CASH_C.VALIDATION.TYPE_REQUIRED }"
-      />
-
-      <div class="sm:col-span-2">
-        <app-form-input
-          label="Amount"
-          type="number"
-          [control]="editForm.controls.amount"
-          placeholder="Amount"
-          [min]="0"
-          [step]="0.01"
-          [errorMessages]="{
-            required: CASH_C.VALIDATION.AMOUNT_INVALID,
-            min: CASH_C.VALIDATION.AMOUNT_INVALID,
-          }"
-        />
-      </div>
-    </form>
-  </app-confirm-modal>
-}
-
-@if (showDeleteModal()) {
-  <app-confirm-modal
-    title="Delete Cash Transaction"
-    confirmButtonText="Delete"
-    cancelButtonText="Cancel"
-    (confirm)="confirmDeleteModal()"
-    (cancel)="cancelDeleteModal()"
-  >
-    <div class="px-5 py-2 space-y-3">
-      <p class="text-gray-700">
-        <span class="font-semibold">{{ deleteTransaction()?.transactionType }}</span>
-        @if (deleteTransaction()?.amount) {
-          <span class="text-gray-500">
-            — ₹ {{ deleteTransaction()?.amount }}
-          </span>
-        }
-      </p>
-      <p class="text-lg font-semibold text-center">{{ CASH_C.MODAL.DELETE }}</p>
-    </div>
-  </app-confirm-modal>
-}

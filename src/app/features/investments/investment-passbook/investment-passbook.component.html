@@ -1,0 +1,292 @@
+<div class="flex justify-between items-center mb-4">
+  <p class="text-gray-500 text-sm">
+    All investments
+    @if (total() > 0) {
+      <span>— {{ investments().length }} of {{ total() }} loaded</span>
+    }
+  </p>
+
+  <button
+    type="button"
+    class="bg-cyan-700 hover:bg-cyan-600 cursor-pointer px-4 py-2 rounded text-white"
+    (click)="onAddInvestment()"
+  >
+    Add Investment
+  </button>
+</div>
+
+<app-data-table
+  [columns]="columns"
+  [rows]="sortedInvestments()"
+  [loading]="loading()"
+  [loadingMore]="loadingMore()"
+  [hasMore]="hasMore()"
+  [infiniteScroll]="true"
+  [sortKey]="sortKey()"
+  [sortDir]="sortDir()"
+  loadingText="Loading investments…"
+  emptyText="No investments found"
+  allLoadedText="All investments loaded"
+  (sortChange)="toggleSort($event)"
+  (edit)="onEditInvestment($event)"
+  (delete)="onDeleteInvestment($event)"
+  (scrolled)="onScroll($event)"
+/>
+
+@if (showAddModal()) {
+  <app-confirm-modal
+    title="Add Investment"
+    confirmButtonText="Add"
+    cancelButtonText="Cancel"
+    size="lg"
+    (confirm)="confirmAddModal()"
+    (cancel)="cancelAddModal()"
+  >
+    <form [formGroup]="addForm" class="grid grid-cols-1 sm:grid-cols-2">
+      <app-form-input
+        label="Date & Time"
+        type="datetime-local"
+        [control]="addForm.controls.transactionDateTime"
+        [errorMessages]="{ required: INVESTMENTS_C.VALIDATION.DATE_REQUIRED }"
+      />
+
+      <app-form-input
+        label="Investment Name"
+        [control]="addForm.controls.investmentName"
+        placeholder="Investment name"
+        [errorMessages]="{ required: INVESTMENTS_C.VALIDATION.NAME_REQUIRED }"
+      />
+
+      <app-form-select
+        label="Payment Mode"
+        [control]="addForm.controls.paymentMode"
+        placeholder="Select payment mode"
+        [options]="paymentModeOptions"
+        [errorMessages]="{ required: INVESTMENTS_C.VALIDATION.PAYMENT_MODE_REQUIRED }"
+      />
+
+      @if (showAddBankSelect()) {
+        <app-form-select
+          label="Bank"
+          [control]="addForm.controls.userBankId"
+          placeholder="Select bank"
+          [emptyValue]="0"
+          [options]="bankOptions()"
+          [errorMessages]="{
+            required: INVESTMENTS_C.VALIDATION.BANK_REQUIRED,
+            min: INVESTMENTS_C.VALIDATION.BANK_REQUIRED,
+          }"
+        />
+      }
+
+      <app-form-select
+        label="Payee"
+        [control]="addForm.controls.payeeId"
+        placeholder="Select payee"
+        [emptyValue]="0"
+        [options]="payeeOptions()"
+        [errorMessages]="{
+          required: INVESTMENTS_C.VALIDATION.PAYEE_REQUIRED,
+          min: INVESTMENTS_C.VALIDATION.PAYEE_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Category"
+        [control]="addForm.controls.categoryId"
+        placeholder="Select category"
+        [emptyValue]="0"
+        [options]="categoryOptions()"
+        [errorMessages]="{
+          required: INVESTMENTS_C.VALIDATION.CATEGORY_REQUIRED,
+          min: INVESTMENTS_C.VALIDATION.CATEGORY_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Sub Category"
+        [control]="addForm.controls.subCategoryId"
+        placeholder="Select sub category"
+        [emptyValue]="0"
+        [options]="subCategoryOptions()"
+        [errorMessages]="{
+          required: INVESTMENTS_C.VALIDATION.SUB_CATEGORY_REQUIRED,
+          min: INVESTMENTS_C.VALIDATION.SUB_CATEGORY_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Investment Type"
+        [control]="addForm.controls.investmentType"
+        placeholder="Select investment type"
+        [options]="investmentTypeOptions()"
+        [errorMessages]="{ required: INVESTMENTS_C.VALIDATION.TYPE_REQUIRED }"
+      />
+
+      <app-form-input
+        label="Quantity"
+        type="number"
+        [control]="addForm.controls.quantity"
+        placeholder="Quantity"
+        [min]="0.0001"
+        [step]="0.0001"
+        [errorMessages]="{
+          required: INVESTMENTS_C.VALIDATION.QUANTITY_INVALID,
+          min: INVESTMENTS_C.VALIDATION.QUANTITY_INVALID,
+        }"
+      />
+
+      <app-form-input
+        label="Amount"
+        type="number"
+        [control]="addForm.controls.amount"
+        placeholder="Amount"
+        [min]="0.01"
+        [step]="0.01"
+        [errorMessages]="{
+          required: INVESTMENTS_C.VALIDATION.AMOUNT_INVALID,
+          min: INVESTMENTS_C.VALIDATION.AMOUNT_INVALID,
+        }"
+      />
+    </form>
+  </app-confirm-modal>
+}
+
+@if (showEditModal()) {
+  <app-confirm-modal
+    title="Edit Investment"
+    confirmButtonText="Update"
+    cancelButtonText="Cancel"
+    size="lg"
+    (confirm)="confirmEditModal()"
+    (cancel)="cancelEditModal()"
+  >
+    <form [formGroup]="editForm" class="grid grid-cols-1 sm:grid-cols-2">
+      <app-form-input
+        label="Date & Time"
+        type="datetime-local"
+        [control]="editForm.controls.transactionDateTime"
+        [errorMessages]="{ required: INVESTMENTS_C.VALIDATION.DATE_REQUIRED }"
+      />
+
+      <app-form-input
+        label="Investment Name"
+        [control]="editForm.controls.investmentName"
+        placeholder="Investment name"
+        [errorMessages]="{ required: INVESTMENTS_C.VALIDATION.NAME_REQUIRED }"
+      />
+
+      <app-form-select
+        label="Payment Mode"
+        [control]="editForm.controls.paymentMode"
+        placeholder="Select payment mode"
+        [options]="paymentModeOptions"
+        [errorMessages]="{ required: INVESTMENTS_C.VALIDATION.PAYMENT_MODE_REQUIRED }"
+      />
+
+      @if (showEditBankSelect()) {
+        <app-form-select
+          label="Bank"
+          [control]="editForm.controls.userBankId"
+          placeholder="Select bank"
+          [emptyValue]="0"
+          [options]="bankOptions()"
+          [errorMessages]="{
+            required: INVESTMENTS_C.VALIDATION.BANK_REQUIRED,
+            min: INVESTMENTS_C.VALIDATION.BANK_REQUIRED,
+          }"
+        />
+      }
+
+      <app-form-select
+        label="Payee"
+        [control]="editForm.controls.payeeId"
+        placeholder="Select payee"
+        [emptyValue]="0"
+        [options]="payeeOptions()"
+        [errorMessages]="{
+          required: INVESTMENTS_C.VALIDATION.PAYEE_REQUIRED,
+          min: INVESTMENTS_C.VALIDATION.PAYEE_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Category"
+        [control]="editForm.controls.categoryId"
+        placeholder="Select category"
+        [emptyValue]="0"
+        [options]="categoryOptions()"
+        [errorMessages]="{
+          required: INVESTMENTS_C.VALIDATION.CATEGORY_REQUIRED,
+          min: INVESTMENTS_C.VALIDATION.CATEGORY_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Sub Category"
+        [control]="editForm.controls.subCategoryId"
+        placeholder="Select sub category"
+        [emptyValue]="0"
+        [options]="subCategoryOptions()"
+        [errorMessages]="{
+          required: INVESTMENTS_C.VALIDATION.SUB_CATEGORY_REQUIRED,
+          min: INVESTMENTS_C.VALIDATION.SUB_CATEGORY_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Investment Type"
+        [control]="editForm.controls.investmentType"
+        placeholder="Select investment type"
+        [options]="investmentTypeOptions()"
+        [errorMessages]="{ required: INVESTMENTS_C.VALIDATION.TYPE_REQUIRED }"
+      />
+
+      <app-form-input
+        label="Quantity"
+        type="number"
+        [control]="editForm.controls.quantity"
+        placeholder="Quantity"
+        [min]="0.0001"
+        [step]="0.0001"
+        [errorMessages]="{
+          required: INVESTMENTS_C.VALIDATION.QUANTITY_INVALID,
+          min: INVESTMENTS_C.VALIDATION.QUANTITY_INVALID,
+        }"
+      />
+
+      <app-form-input
+        label="Amount"
+        type="number"
+        [control]="editForm.controls.amount"
+        placeholder="Amount"
+        [min]="0.01"
+        [step]="0.01"
+        [errorMessages]="{
+          required: INVESTMENTS_C.VALIDATION.AMOUNT_INVALID,
+          min: INVESTMENTS_C.VALIDATION.AMOUNT_INVALID,
+        }"
+      />
+    </form>
+  </app-confirm-modal>
+}
+
+@if (showDeleteModal()) {
+  <app-confirm-modal
+    title="Delete Investment"
+    confirmButtonText="Delete"
+    cancelButtonText="Cancel"
+    (confirm)="confirmDeleteModal()"
+    (cancel)="cancelDeleteModal()"
+  >
+    <div class="px-5 py-2 space-y-3">
+      <p class="text-gray-700">
+        <span class="font-semibold">{{ deleteInvestment()?.investmentName }}</span>
+        @if (deleteInvestment()?.investmentType) {
+          <span class="text-gray-500"> ({{ deleteInvestment()?.investmentType }})</span>
+        }
+      </p>
+      <p class="text-lg font-semibold text-center">{{ INVESTMENTS_C.MODAL.DELETE }}</p>
+    </div>
+  </app-confirm-modal>
+}

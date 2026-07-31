@@ -3,97 +3,115 @@
     <div>
       <h2 class="text-2xl font-bold text-gray-700">My Banks</h2>
       <p class="text-gray-500 text-sm">
-        Manage all your bank accounts: [Number of Banks - <span>{{ banks().length }}</span
-        >]
+        Manage bank accounts and transactions
+        @if (banks().length > 0) {
+          <span>— {{ banks().length }} bank(s)</span>
+        }
       </p>
     </div>
-    <div class="flex gap-2">
+
+    <div class="flex items-center gap-2">
       <button
-        class="w-10 h-10 rounded-full bg-white shadow hover:bg-gray-400 transition"
-        (click)="scrollLeft()"
-      >
-        <lucide-icon [img]="chevronLeftIcon" class="flex justify-center items-center"></lucide-icon>
-      </button>
-      <button
-        class="w-10 h-10 rounded-full bg-white shadow hover:bg-gray-400 transition"
-        (click)="scrollRight()"
+        type="button"
+        (click)="toggleBankCards()"
+        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm cursor-pointer"
+        [title]="showBankCards() ? 'Hide bank cards' : 'Show bank cards'"
       >
         <lucide-icon
-          [img]="chevronRightIcon"
-          class="flex justify-center items-center"
+          [img]="showBankCards() ? chevronUpIcon : chevronDownIcon"
+          class="w-4 h-4"
         ></lucide-icon>
+        {{ showBankCards() ? 'Hide banks' : 'Show banks' }}
+      </button>
+
+      @if (showBankCards()) {
+        <button
+          type="button"
+          class="w-10 h-10 rounded-full bg-white shadow hover:bg-gray-400 transition cursor-pointer"
+          (click)="scrollLeft()"
+          title="Scroll left"
+        >
+          <lucide-icon
+            [img]="chevronLeftIcon"
+            class="flex justify-center items-center"
+          ></lucide-icon>
+        </button>
+        <button
+          type="button"
+          class="w-10 h-10 rounded-full bg-white shadow hover:bg-gray-400 transition cursor-pointer"
+          (click)="scrollRight()"
+          title="Scroll right"
+        >
+          <lucide-icon
+            [img]="chevronRightIcon"
+            class="flex justify-center items-center"
+          ></lucide-icon>
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (showBankCards()) {
+    <div
+      #scrollContainer
+      class="flex gap-5 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-3 mb-2"
+      style="scrollbar-width: none"
+    >
+      @for (bank of banks(); track bank.id) {
+        <app-bank-card
+          [bank]="bank"
+          [selected]="selectedUserBankId() === bank.id"
+          (select)="onSelectBank($event)"
+          (edit)="openEditModal($event)"
+          (delete)="openDeleteModal($event)"
+        />
+      }
+
+      <app-add-card label="Add Bank" (add)="openModal()" />
+    </div>
+  }
+
+  <div class="border-t border-gray-300 mt-6 pt-6">
+    <div class="flex gap-2 overflow-x-auto pb-2 mb-4" style="scrollbar-width: thin">
+      <button
+        type="button"
+        (click)="selectTab('passbook')"
+        class="shrink-0 px-4 py-2 rounded-t-lg border-b-2 text-sm font-semibold transition cursor-pointer"
+        [ngClass]="
+          selectedTab() === 'passbook'
+            ? 'border-cyan-700 text-cyan-800 bg-white'
+            : 'border-transparent text-gray-500 hover:text-cyan-700 hover:bg-white/60'
+        "
+      >
+        Passbook
+      </button>
+      <button
+        type="button"
+        (click)="selectTab('analysis')"
+        class="shrink-0 px-4 py-2 rounded-t-lg border-b-2 text-sm font-semibold transition cursor-pointer"
+        [ngClass]="
+          selectedTab() === 'analysis'
+            ? 'border-cyan-700 text-cyan-800 bg-white'
+            : 'border-transparent text-gray-500 hover:text-cyan-700 hover:bg-white/60'
+        "
+      >
+        Analysis
       </button>
     </div>
-  </div>
-  <div
-    #scrollContainer
-    class="flex gap-5 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-3"
-    style="scrollbar-width: none"
-  >
-    @for (bank of banks(); track bank.id) {
-      <app-bank-card
-        [bank]="bank"
-        (edit)="openEditModal($event)"
-        (delete)="openDeleteModal($event)"
+
+    @if (selectedTab() === 'passbook') {
+      <app-bank-passbook
+        [banks]="banks()"
+        [selectedUserBankId]="selectedUserBankId()"
+        [cardsVisible]="showBankCards()"
+        (selectBank)="onSelectBank($event)"
+        (banksRefresh)="loadUserBanks()"
       />
-    }
-
-    <app-add-card label="Add Bank" (add)="openModal()" />
-  </div>
-
-  <div class="border-t border-gray-300 mt-8 pt-8">
-    <div class="mb-4">
-      <h3 class="text-xl font-bold text-gray-700">Bank Transactions</h3>
-      <p class="text-gray-500 text-sm">
-        Transactions by bank account
-        @if (txTotal() > 0) {
-          <span>— {{ bankTransactions().length }} of {{ txTotal() }} loaded</span>
-        }
-      </p>
-    </div>
-
-    @if (banks().length === 0) {
-      <div
-        class="bg-white rounded-2xl shadow-sm border border-gray-100 py-12 text-center text-gray-500"
-      >
-        Add a bank account to view bank transactions
-      </div>
-    } @else {
-      <!-- Tabs: user banks -->
-      <div class="flex gap-2 overflow-x-auto pb-2 mb-4" style="scrollbar-width: thin">
-        @for (bank of banks(); track bank.id) {
-          <button
-            type="button"
-            (click)="selectBankTab(bank)"
-            class="shrink-0 px-4 py-2 rounded-t-lg border-b-2 text-sm font-semibold transition cursor-pointer"
-            [ngClass]="
-              selectedUserBankId() === bank.id
-                ? 'border-cyan-700 text-cyan-800 bg-white'
-                : 'border-transparent text-gray-500 hover:text-cyan-700 hover:bg-white/60'
-            "
-          >
-            {{ bank.name }}
-          </button>
-        }
-      </div>
-
-      <app-data-table
-        [columns]="bankTxColumns"
-        [rows]="sortedBankTransactions()"
-        [loading]="txLoading()"
-        [loadingMore]="txLoadingMore()"
-        [hasMore]="txHasMore()"
-        [infiniteScroll]="true"
-        [sortKey]="txSortKey()"
-        [sortDir]="txSortDir()"
-        maxHeightClass="max-h-[calc(100vh-16rem)]"
-        loadingText="Loading bank transactions…"
-        emptyText="No bank transactions found"
-        allLoadedText="All bank transactions loaded"
-        (sortChange)="toggleTxSort($event)"
-        (edit)="onEditBankTransaction($event)"
-        (delete)="onDeleteBankTransaction($event)"
-        (scrolled)="onTxScroll($event)"
+    } @else if (selectedTab() === 'analysis') {
+      <app-bank-analysis
+        [banks]="banks()"
+        [selectedUserBankId]="selectedUserBankId()"
+        (selectBank)="onSelectBank($event)"
       />
     }
   </div>
@@ -195,69 +213,6 @@
           }"
         />
       </form>
-    </div>
-  </app-confirm-modal>
-}
-
-@if (showEditTxModal()) {
-  <app-confirm-modal
-    title="Edit Bank Transaction"
-    confirmButtonText="Update"
-    cancelButtonText="Cancel"
-    size="lg"
-    (confirm)="confirmEditTxModal()"
-    (cancel)="cancelEditTxModal()"
-  >
-    <form [formGroup]="editTxForm" class="grid grid-cols-1 sm:grid-cols-2">
-      <app-form-input
-        label="Date & Time"
-        type="datetime-local"
-        [control]="editTxForm.controls.transactionDateTime"
-        [errorMessages]="{ required: BANKS_C.VALIDATION.TX.DATE_REQUIRED }"
-      />
-
-      <app-form-select
-        label="Type"
-        [control]="editTxForm.controls.transactionType"
-        placeholder="Select type"
-        [options]="transactionTypeOptions"
-        [errorMessages]="{ required: BANKS_C.VALIDATION.TX.TYPE_REQUIRED }"
-      />
-
-      <div class="sm:col-span-2">
-        <app-form-input
-          label="Amount"
-          type="number"
-          [control]="editTxForm.controls.amount"
-          placeholder="Amount"
-          [min]="0"
-          [step]="0.01"
-          [errorMessages]="{
-            required: BANKS_C.VALIDATION.TX.AMOUNT_INVALID,
-            min: BANKS_C.VALIDATION.TX.AMOUNT_INVALID,
-          }"
-        />
-      </div>
-    </form>
-  </app-confirm-modal>
-}
-
-@if (showDeleteTxModal()) {
-  <app-confirm-modal
-    title="Delete Bank Transaction"
-    confirmButtonText="Delete"
-    cancelButtonText="Cancel"
-    (confirm)="confirmDeleteTxModal()"
-    (cancel)="cancelDeleteTxModal()"
-  >
-    <div class="px-5 py-2 space-y-3">
-      <p class="text-gray-700">
-        <span class="font-semibold">{{ deleteBankTransaction()?.transactionType }}</span>
-        @if (deleteBankTransaction()?.amount) {
-          <span class="text-gray-500"> — ₹ {{ deleteBankTransaction()?.amount }}</span>
-        }
-      </p>
-      <p class="text-lg font-semibold text-center">{{ BANKS_C.MODAL.DELETE_TX }}</p>
     </div>
   </app-confirm-modal>
 }

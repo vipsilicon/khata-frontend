@@ -1,0 +1,41 @@
+<div class="mb-4">
+  <h3 class="text-xl font-bold text-gray-700">Bank Analysis</h3>
+  <p class="text-gray-500 text-sm">Insights for the selected bank account</p>
+  <p class="text-xs text-amber-700/90 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-2">
+    <span class="font-semibold">Note:</span>
+    You may have multiple banks. Pick a bank tab below to analyse that account only.
+    Use <span class="font-medium">Hide banks</span> above for more space on this view.
+  </p>
+</div>
+
+@if (banks().length === 0) {
+  <div
+    class="bg-white rounded-2xl shadow-sm border border-gray-100 py-12 text-center text-gray-500"
+  >
+    Add a bank account to view analysis
+  </div>
+} @else {
+  <div class="flex gap-2 overflow-x-auto pb-2 mb-4" style="scrollbar-width: thin">
+    @for (bank of banks(); track bank.id) {
+      <button
+        type="button"
+        (click)="onSelectBank(bank)"
+        class="shrink-0 px-4 py-2 rounded-t-lg border-b-2 text-sm font-semibold transition cursor-pointer"
+        [ngClass]="
+          selectedUserBankId() === bank.id
+            ? 'border-cyan-700 text-cyan-800 bg-white'
+            : 'border-transparent text-gray-500 hover:text-cyan-700 hover:bg-white/60'
+        "
+      >
+        {{ bank.name }}
+      </button>
+    }
+  </div>
+
+  <!-- Reserved for future bank analysis charts / summaries -->
+  <div
+    class="bg-white rounded-2xl shadow-sm border border-gray-100 min-h-[20rem] flex items-center justify-center text-gray-400 text-sm"
+  >
+    Analysis for the selected bank will appear here
+  </div>
+}

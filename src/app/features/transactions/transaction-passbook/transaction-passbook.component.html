@@ -1,0 +1,333 @@
+<div class="flex justify-between items-center mb-4">
+  <p class="text-gray-500 text-sm">
+    All transactions
+    @if (total() > 0) {
+      <span>— {{ transactions().length }} of {{ total() }} loaded</span>
+    }
+  </p>
+
+  <button
+    type="button"
+    class="bg-cyan-700 hover:bg-cyan-600 cursor-pointer px-4 py-2 rounded text-white"
+    (click)="onAddTransaction()"
+  >
+    Add Transaction
+  </button>
+</div>
+
+<app-data-table
+  [columns]="columns"
+  [rows]="sortedTransactions()"
+  [loading]="loading()"
+  [loadingMore]="loadingMore()"
+  [hasMore]="hasMore()"
+  [infiniteScroll]="true"
+  [sortKey]="sortKey()"
+  [sortDir]="sortDir()"
+  loadingText="Loading transactions…"
+  emptyText="No transactions found"
+  allLoadedText="All transactions loaded"
+  (sortChange)="toggleSort($event)"
+  (edit)="onEditTransaction($event)"
+  (delete)="onDeleteTransaction($event)"
+  (scrolled)="onScroll($event)"
+/>
+
+@if (showAddModal()) {
+  <app-confirm-modal
+    title="Add Transaction"
+    confirmButtonText="Add"
+    cancelButtonText="Cancel"
+    size="lg"
+    (confirm)="confirmAddModal()"
+    (cancel)="cancelAddModal()"
+  >
+    <form [formGroup]="addForm" class="grid grid-cols-1 sm:grid-cols-2">
+      <app-form-input
+        label="Date & Time"
+        type="datetime-local"
+        [control]="addForm.controls.transactionDateTime"
+        [errorMessages]="{ required: TX_C.VALIDATION.DATE_REQUIRED }"
+      />
+
+      <app-form-select
+        label="Payee Name"
+        [control]="addForm.controls.payeeId"
+        placeholder="Select payee"
+        [emptyValue]="0"
+        [options]="payeeOptions()"
+        [errorMessages]="{
+          required: TX_C.VALIDATION.PAYEE_REQUIRED,
+          min: TX_C.VALIDATION.PAYEE_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Payment Mode"
+        [control]="addForm.controls.paymentMode"
+        placeholder="Select payment mode"
+        [options]="paymentModeOptions"
+        [errorMessages]="{ required: TX_C.VALIDATION.PAYMENT_MODE_REQUIRED }"
+      />
+
+      @if (showAddBankSelect()) {
+        <app-form-select
+          label="Bank Account"
+          [control]="addForm.controls.userBankId"
+          placeholder="Select bank"
+          [emptyValue]="0"
+          [options]="bankOptions()"
+          [errorMessages]="{
+            required: TX_C.VALIDATION.BANK_REQUIRED,
+            min: TX_C.VALIDATION.BANK_REQUIRED,
+          }"
+        />
+      }
+
+      <app-form-select
+        label="Purpose"
+        [control]="addForm.controls.purpose"
+        placeholder="Select purpose"
+        [options]="purposeOptions()"
+        [errorMessages]="{ required: TX_C.VALIDATION.PURPOSE_REQUIRED }"
+      />
+
+      <app-form-select
+        label="Category"
+        [control]="addForm.controls.categoryId"
+        placeholder="Select category"
+        [emptyValue]="0"
+        [options]="categoryOptions()"
+        [errorMessages]="{
+          required: TX_C.VALIDATION.CATEGORY_REQUIRED,
+          min: TX_C.VALIDATION.CATEGORY_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Sub Category"
+        [control]="addForm.controls.subCategoryId"
+        placeholder="Select sub category"
+        [emptyValue]="0"
+        [options]="subCategoryOptions()"
+        [errorMessages]="{
+          required: TX_C.VALIDATION.SUB_CATEGORY_REQUIRED,
+          min: TX_C.VALIDATION.SUB_CATEGORY_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Type"
+        [control]="addForm.controls.transactionType"
+        placeholder="Select type"
+        [options]="transactionTypeOptions"
+        [errorMessages]="{ required: TX_C.VALIDATION.TYPE_REQUIRED }"
+      />
+
+      <app-form-input
+        label="Amount"
+        type="number"
+        [control]="addForm.controls.amount"
+        placeholder="Amount"
+        [min]="0.01"
+        [step]="0.01"
+        [errorMessages]="{
+          required: TX_C.VALIDATION.AMOUNT_INVALID,
+          min: TX_C.VALIDATION.AMOUNT_INVALID,
+        }"
+      />
+
+      @if (showAddInvestmentFields()) {
+        <app-form-select
+          label="Investment Type"
+          [control]="addForm.controls.investmentType"
+          placeholder="Select investment type"
+          [options]="investmentTypeOptions()"
+          [errorMessages]="{ required: TX_C.VALIDATION.INVESTMENT_TYPE_REQUIRED }"
+        />
+
+        <app-form-input
+          label="Investment Name"
+          type="text"
+          [control]="addForm.controls.investmentName"
+          placeholder="Investment name"
+          [errorMessages]="{ required: TX_C.VALIDATION.INVESTMENT_NAME_REQUIRED }"
+        />
+
+        <app-form-input
+          label="Quantity"
+          type="number"
+          [control]="addForm.controls.quantity"
+          placeholder="Quantity"
+          [min]="0.0001"
+          [step]="0.0001"
+          [errorMessages]="{
+            required: TX_C.VALIDATION.QUANTITY_INVALID,
+            min: TX_C.VALIDATION.QUANTITY_INVALID,
+          }"
+        />
+      }
+    </form>
+  </app-confirm-modal>
+}
+
+@if (showEditModal()) {
+  <app-confirm-modal
+    title="Edit Transaction"
+    confirmButtonText="Update"
+    cancelButtonText="Cancel"
+    size="lg"
+    (confirm)="confirmEditModal()"
+    (cancel)="cancelEditModal()"
+  >
+    <form [formGroup]="editForm" class="grid grid-cols-1 sm:grid-cols-2">
+      <app-form-input
+        label="Date & Time"
+        type="datetime-local"
+        [control]="editForm.controls.transactionDateTime"
+        [errorMessages]="{ required: TX_C.VALIDATION.DATE_REQUIRED }"
+      />
+
+      <app-form-select
+        label="Payee Name"
+        [control]="editForm.controls.payeeId"
+        placeholder="Select payee"
+        [emptyValue]="0"
+        [options]="payeeOptions()"
+        [errorMessages]="{
+          required: TX_C.VALIDATION.PAYEE_REQUIRED,
+          min: TX_C.VALIDATION.PAYEE_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Payment Mode"
+        [control]="editForm.controls.paymentMode"
+        placeholder="Select payment mode"
+        [options]="paymentModeOptions"
+        [errorMessages]="{ required: TX_C.VALIDATION.PAYMENT_MODE_REQUIRED }"
+      />
+
+      @if (showEditBankSelect()) {
+        <app-form-select
+          label="Bank Account"
+          [control]="editForm.controls.userBankId"
+          placeholder="Select bank"
+          [emptyValue]="0"
+          [options]="bankOptions()"
+          [errorMessages]="{
+            required: TX_C.VALIDATION.BANK_REQUIRED,
+            min: TX_C.VALIDATION.BANK_REQUIRED,
+          }"
+        />
+      }
+
+      <app-form-select
+        label="Purpose"
+        [control]="editForm.controls.purpose"
+        placeholder="Select purpose"
+        [options]="purposeOptions()"
+        [errorMessages]="{ required: TX_C.VALIDATION.PURPOSE_REQUIRED }"
+      />
+
+      <app-form-select
+        label="Category"
+        [control]="editForm.controls.categoryId"
+        placeholder="Select category"
+        [emptyValue]="0"
+        [options]="categoryOptions()"
+        [errorMessages]="{
+          required: TX_C.VALIDATION.CATEGORY_REQUIRED,
+          min: TX_C.VALIDATION.CATEGORY_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Sub Category"
+        [control]="editForm.controls.subCategoryId"
+        placeholder="Select sub category"
+        [emptyValue]="0"
+        [options]="subCategoryOptions()"
+        [errorMessages]="{
+          required: TX_C.VALIDATION.SUB_CATEGORY_REQUIRED,
+          min: TX_C.VALIDATION.SUB_CATEGORY_REQUIRED,
+        }"
+      />
+
+      <app-form-select
+        label="Type"
+        [control]="editForm.controls.transactionType"
+        placeholder="Select type"
+        [options]="transactionTypeOptions"
+        [errorMessages]="{ required: TX_C.VALIDATION.TYPE_REQUIRED }"
+      />
+
+      <app-form-input
+        label="Amount"
+        type="number"
+        [control]="editForm.controls.amount"
+        placeholder="Amount"
+        [min]="0.01"
+        [step]="0.01"
+        [errorMessages]="{
+          required: TX_C.VALIDATION.AMOUNT_INVALID,
+          min: TX_C.VALIDATION.AMOUNT_INVALID,
+        }"
+      />
+
+      @if (showEditInvestmentFields()) {
+        <app-form-select
+          label="Investment Type"
+          [control]="editForm.controls.investmentType"
+          placeholder="Select investment type"
+          [options]="investmentTypeOptions()"
+          [errorMessages]="{ required: TX_C.VALIDATION.INVESTMENT_TYPE_REQUIRED }"
+        />
+
+        <app-form-input
+          label="Investment Name"
+          type="text"
+          [control]="editForm.controls.investmentName"
+          placeholder="Investment name"
+          [errorMessages]="{ required: TX_C.VALIDATION.INVESTMENT_NAME_REQUIRED }"
+        />
+
+        <app-form-input
+          label="Quantity"
+          type="number"
+          [control]="editForm.controls.quantity"
+          placeholder="Quantity"
+          [min]="0.0001"
+          [step]="0.0001"
+          [errorMessages]="{
+            required: TX_C.VALIDATION.QUANTITY_INVALID,
+            min: TX_C.VALIDATION.QUANTITY_INVALID,
+          }"
+        />
+      }
+    </form>
+  </app-confirm-modal>
+}
+
+@if (showDeleteModal()) {
+  <app-confirm-modal
+    title="Delete Transaction"
+    confirmButtonText="Delete"
+    cancelButtonText="Cancel"
+    (confirm)="confirmDeleteModal()"
+    (cancel)="cancelDeleteModal()"
+  >
+    <div class="px-5 py-2 space-y-3">
+      <p class="text-gray-700">
+        <span class="font-semibold">{{ deleteTransaction()?.transactionType }}</span>
+        @if (deleteTransaction()?.amount) {
+          <span class="text-gray-500"> — ₹ {{ deleteTransaction()?.amount }}</span>
+        }
+        @if (deleteTransaction()?.purpose) {
+          <span class="text-gray-500"> ({{ deleteTransaction()?.purpose }})</span>
+        }
+      </p>
+      <p class="text-lg font-semibold text-center">{{ TX_C.MODAL.DELETE }}</p>
+    </div>
+  </app-confirm-modal>
+}

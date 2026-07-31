@@ -32,27 +32,52 @@ export function sortRows<T extends Record<string, any>>(
   const dateKeys = options?.dateKeys ? new Set(options.dateKeys) : DEFAULT_DATE_KEYS;
 
   return [...list].sort((a, b) => {
-    let av: string | number = a[key] ?? '';
-    let bv: string | number = b[key] ?? '';
+    const rawA = a[key];
+    const rawB = b[key];
+    const emptyA = rawA === null || rawA === undefined || rawA === '';
+    const emptyB = rawB === null || rawB === undefined || rawB === '';
+
+    // Keep empty cells at the end for both directions
+    if (emptyA && emptyB) {
+      return 0;
+    }
+    if (emptyA) {
+      return 1;
+    }
+    if (emptyB) {
+      return -1;
+    }
 
     if (numericKeys.has(key)) {
-      av = Number(av);
-      bv = Number(bv);
-    } else if (dateKeys.has(key)) {
-      av = new Date(String(av)).getTime();
-      bv = new Date(String(bv)).getTime();
-    } else {
-      av = String(av).toLowerCase();
-      bv = String(bv).toLowerCase();
+      const av = Number(rawA);
+      const bv = Number(rawB);
+      if (av < bv) {
+        return dir === 'asc' ? -1 : 1;
+      }
+      if (av > bv) {
+        return dir === 'asc' ? 1 : -1;
+      }
+      return 0;
     }
 
-    if (av < bv) {
-      return dir === 'asc' ? -1 : 1;
+    if (dateKeys.has(key)) {
+      const av = new Date(String(rawA)).getTime();
+      const bv = new Date(String(rawB)).getTime();
+      if (av < bv) {
+        return dir === 'asc' ? -1 : 1;
+      }
+      if (av > bv) {
+        return dir === 'asc' ? 1 : -1;
+      }
+      return 0;
     }
-    if (av > bv) {
-      return dir === 'asc' ? 1 : -1;
-    }
-    return 0;
+
+    // Text columns (e.g. payeeName) — locale-aware compare
+    const cmp = String(rawA).localeCompare(String(rawB), undefined, {
+      sensitivity: 'base',
+      numeric: true,
+    });
+    return dir === 'asc' ? cmp : -cmp;
   });
 }
 
