@@ -1,0 +1,38 @@
+# Used by BuildKit with docker/Dockerfile (context = project root).
+# See: https://docs.docker.com/build/building/context/#dockerignore-files
+
+# Dependencies & build output
+node_modules
+dist
+.angular
+tmp
+out-tsc
+
+# Git / IDE
+.git
+.gitignore
+.vscode
+.idea
+
+# Docker folder docs / local env (not needed in image)
+docker/*.md
+docker/.env
+docker/.env.*
+
+# Markdown at repo root
+*.md
+
+# Tests & tooling caches
+coverage
+__screenshots__
+*.log
+npm-debug.log*
+.sass-cache
+
+# Env / local secrets
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db

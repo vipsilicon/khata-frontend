@@ -1,0 +1,29 @@
+# Khata Frontend — build image and run the SSR container
+#
+# From this folder (docker/):
+#   docker compose up -d --build
+#
+# From project root:
+#   docker compose -f docker/docker-compose.yml --env-file docker/.env up -d --build
+#
+# Optional env (docker/.env):
+#   FRONTEND_PORT=4000
+#   API_BASE_URL=http://localhost:3000
+
+services:
+  frontend:
+    build:
+      # Project root (package.json, src/, …)
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        # API the browser will call (khata-backend). Must be reachable from the user's browser.
+        API_BASE_URL: ${API_BASE_URL:-http://localhost:3000}
+    image: khata-frontend:latest
+    container_name: khata-frontend
+    ports:
+      - "${FRONTEND_PORT:-4000}:4000"
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+    restart: unless-stopped
