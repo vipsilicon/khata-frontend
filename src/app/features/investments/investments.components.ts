@@ -1,7 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { finalize } from 'rxjs';
-import { ArrowDown, ArrowUp, ArrowUpDown, LucideAngularModule } from 'lucide-angular';
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  LucideAngularModule,
+  SquarePen,
+  Trash2,
+} from 'lucide-angular';
 
 // Services
 import { ApiServices } from '../../services/api/api.services';
@@ -38,6 +45,8 @@ export class InvestmentsComponents implements OnInit {
   readonly arrowUp = ArrowUp;
   readonly arrowDown = ArrowDown;
   readonly arrowUpDown = ArrowUpDown;
+  readonly squarePen = SquarePen;
+  readonly trash = Trash2;
   readonly limit = 10;
 
   investments = signal<Investment[]>([]);
@@ -49,6 +58,8 @@ export class InvestmentsComponents implements OnInit {
 
   sortKey = signal<SortKey>('transactionDateTime');
   sortDir = signal<SortDir>('desc');
+
+  amount = signal<number>(0);
 
   sortedInvestments = computed(() => {
     const list = [...this.investments()];
@@ -178,5 +189,15 @@ export class InvestmentsComponents implements OnInit {
       return this.arrowUpDown;
     }
     return this.sortDir() === 'asc' ? this.arrowUp : this.arrowDown;
+  }
+
+  onEditInvestment(item: Investment): void {
+    // Wire to edit flow when API/modal is ready
+    console.log('Edit investment', item.id);
+  }
+
+  onDeleteInvestment(item: Investment): void {
+    // Wire to delete flow when API/modal is ready
+    console.log('Delete investment', item.id);
   }
 }

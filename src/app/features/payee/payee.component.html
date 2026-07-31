@@ -1,0 +1,181 @@
+<div class="p-6">
+  <div class="flex justify-between items-center mb-5">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-700">Payee</h2>
+      <p class="text-gray-500 text-sm">Manage payees</p>
+    </div>
+
+    <button
+      class="bg-cyan-700 hover:bg-cyan-600 cursor-pointer px-4 py-2 rounded text-white"
+      (click)="onAddPayee()"
+    >
+      Add Payee
+    </button>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    @if (loadingPayee() && payees().length === 0) {
+      <div class="flex items-center justify-center py-20 text-gray-500">Loading Payee Records</div>
+    } @else if (!loadingPayee() && payees().length === 0) {
+      <div class="flex items-center justify-center py-20 text-gray-500">No Payee Record found</div>
+    } @else {
+      <div class="overflow-auto max-h-[calc(100vh-12rem)]">
+        <table class="w-full text-sm text-left border-collapse">
+          <thead class="sticky top-0 z-10 bg-cyan-800 text-white">
+            <tr>
+              <th class="px-4 py-3 font-semibold whitespace-nowrap">Name</th>
+              <th class="px-4 py-3 font-semibold whitespace-nowrap">Payee Category</th>
+              <th class="px-4 py-3 font-semibold whitespace-nowrap text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (payee of payees(); track payee.id) {
+              <tr class="border-b border-gray-100 hover:bg-cyan-50/60 transition-colors">
+                <td class="px-4 py-3 text-gray-700">{{ payee.name }}</td>
+                <td class="px-4 py-3 text-gray-700">{{ payee.payeeCategory }}</td>
+                <td class="px-4 py-3">
+                  <div class="flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      title="Edit"
+                      (click)="onEditPayee(payee)"
+                      class="w-7 h-7 rounded-full bg-cyan-500 text-white flex items-center justify-center hover:bg-cyan-600 transition duration-200 shadow-md cursor-pointer"
+                    >
+                      <lucide-icon [img]="squarePen" class="w-4 h-4"></lucide-icon>
+                    </button>
+                    <button
+                      type="button"
+                      title="Delete"
+                      (click)="onDeletePayee(payee)"
+                      class="w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition duration-200 shadow-md cursor-pointer"
+                    >
+                      <lucide-icon [img]="trash" class="w-4 h-4"></lucide-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+@if (showAddPayeeModel()) {
+  <app-confirm-modal
+    title="Add Payee"
+    confirmButtonText="Add"
+    cancelButtonText="Cancel"
+    size="lg"
+    (confirm)="confirmAddPayeeModal()"
+    (cancel)="cancelAddPayeeModal()"
+  >
+    <form [formGroup]="payeeForm">
+      <div class="px-5 py-2 space-y-5">
+        <label class="block mb-2 font-medium">Payee Name</label>
+        <input
+          type="text"
+          formControlName="name"
+          placeholder="Enter payee name"
+          class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:ring-cyan-500"
+        />
+
+        <div class="h-6">
+          @if (name_payeeForm.touched && name_payeeForm.hasError('required')) {
+            <p class="text-sm text-red-500">{{ PAYEE_C.VALIDATION.NAME_NOT_EMPTY }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="px-5 py-2 space-y-5">
+        <label class="block mb-2 font-medium">Payee Category</label>
+        <select
+          formControlName="payeeCategory"
+          class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:ring-2 focus:ring-cyan-500"
+        >
+          <option value="">Select Payee Category</option>
+
+          @for (payeeCategory of payeeCategoryList(); track payeeCategory.id) {
+            <option [ngValue]="payeeCategory.name">{{ payeeCategory.name }}</option>
+          }
+        </select>
+
+        <div class="h-2">
+          @if (payeeCategory_payeeForm.touched && payeeCategory_payeeForm.hasError('required')) {
+            <p class="text-sm text-red-500">{{ PAYEE_C.VALIDATION.SELECT_PAYEE_CATEGORY }}</p>
+          }
+        </div>
+      </div>
+    </form>
+  </app-confirm-modal>
+}
+
+@if (showEditPayeeModal()) {
+  <app-confirm-modal
+    title="Edit Payee"
+    confirmButtonText="Update"
+    cancelButtonText="Cancel"
+    size="lg"
+    (confirm)="confirmEditPayeeModal()"
+    (cancel)="cancelEditPayeeModal()"
+  >
+    <form [formGroup]="editForm">
+      <div class="px-5 py-2 space-y-5">
+        <label class="block mb-2 font-medium">Payee Name</label>
+        <input
+          type="text"
+          formControlName="name"
+          placeholder="Enter payee name"
+          class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:ring-2 focus:ring-cyan-500"
+        />
+
+        <div class="h-6">
+          @if (name_editForm.touched && name_editForm.hasError('required')) {
+            <p class="text-sm text-red-500">{{ PAYEE_C.VALIDATION.NAME_NOT_EMPTY }}</p>
+          }
+        </div>
+      </div>
+
+      <div class="px-5 py-2 space-y-5">
+        <label class="block mb-2 font-medium">Payee Category</label>
+        <select
+          formControlName="payeeCategory"
+          class="w-full rounded-lg border border-gray-300 px-4 py-2 outline-none focus:ring-2 focus:ring-cyan-500"
+        >
+          <option value="">Select Payee Category</option>
+
+          @for (payeeCategory of payeeCategoryList(); track payeeCategory.id) {
+            <option [ngValue]="payeeCategory.name">{{ payeeCategory.name }}</option>
+          }
+        </select>
+
+        <div class="h-2">
+          @if (payeeCategory_editForm.touched && payeeCategory_editForm.hasError('required')) {
+            <p class="text-sm text-red-500">{{ PAYEE_C.VALIDATION.SELECT_PAYEE_CATEGORY }}</p>
+          }
+        </div>
+      </div>
+    </form>
+  </app-confirm-modal>
+}
+
+@if (showDeletePayeeModal()) {
+  <app-confirm-modal
+    title="Delete Payee"
+    confirmButtonText="Delete"
+    cancelButtonText="Cancel"
+    (confirm)="confirmDeletePayeeModal()"
+    (cancel)="cancelDeletePayeeModal()"
+  >
+    <div class="px-5 py-2 space-y-3">
+      <p class="text-gray-700">
+        <span class="font-semibold">{{ deletePayee()?.name }}</span>
+        @if (deletePayee()?.payeeCategory) {
+          <span class="text-gray-500"> ({{ deletePayee()?.payeeCategory }})</span>
+        }
+      </p>
+      <p class="text-lg font-semibold text-center">{{ PAYEE_C.MODAL.DELETE_PAYEE }}</p>
+    </div>
+  </app-confirm-modal>
+}

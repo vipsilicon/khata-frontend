@@ -14,6 +14,7 @@ import {
   ChartCandlestick,
 } from 'lucide-angular';
 import { DashCardComponent } from '../../components/dash-card/dash-card.component';
+import { AgendaComponent } from '../../components/agenda/agenda.component';
 
 // Services
 import { ApiServices } from '../../services/api/api.services';
@@ -30,7 +31,7 @@ interface DashboardCard {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [LucideAngularModule, DashCardComponent, CommonModule],
+  imports: [LucideAngularModule, DashCardComponent, CommonModule, AgendaComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })

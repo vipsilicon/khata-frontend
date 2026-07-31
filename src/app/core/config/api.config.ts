@@ -30,4 +30,11 @@ export const API_CONFIG = {
   INVESTMENT: {
     LIST: '/investments/list',
   },
+  PAYEE: {
+    PAYEE_CATEGORY_LIST: '/payee/category-list',
+    LIST: '/payee/list',
+    CREATE: '/payee/create',
+    UPDATE: '/payee',
+    DELETE: '/payee',
+  },
 };

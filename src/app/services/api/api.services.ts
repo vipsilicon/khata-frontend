@@ -36,7 +36,17 @@ export class ApiServices {
     return this.http.put<T>(`${this.apiBaseUrl}${url}`, body, {});
   }
 
+  patch<T>(url: string, body: any): Observable<T> {
+    return this.http.patch<T>(`${this.apiBaseUrl}${url}`, body, {});
+  }
+
   post<T>(url: string, body: any): Observable<T> {
     return this.http.post<T>(`${this.apiBaseUrl}${url}`, body, {});
+  }
+
+  delete<T>(url: string, params?: Record<string, any>): Observable<T> {
+    return this.http.delete<T>(`${this.apiBaseUrl}${url}`, {
+      params: this.createParams(params),
+    });
   }
 }

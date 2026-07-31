@@ -1,7 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { finalize } from 'rxjs';
-import { ArrowDown, ArrowUp, ArrowUpDown, LucideAngularModule } from 'lucide-angular';
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  LucideAngularModule,
+  SquarePen,
+  Trash2,
+} from 'lucide-angular';
 
 // Services
 import { ApiServices } from '../../services/api/api.services';
@@ -36,6 +43,8 @@ export class CashComponent implements OnInit {
   readonly arrowUp = ArrowUp;
   readonly arrowDown = ArrowDown;
   readonly arrowUpDown = ArrowUpDown;
+  readonly squarePen = SquarePen;
+  readonly trash = Trash2;
   readonly limit = 10;
 
   cashTransactions = signal<CashTransaction[]>([]);
@@ -47,6 +56,7 @@ export class CashComponent implements OnInit {
 
   sortKey = signal<SortKey>('transactionDateTime');
   sortDir = signal<SortDir>('desc');
+  balance = signal<number>(0);
 
   sortedCashTransactions = computed(() => {
     const list = [...this.cashTransactions()];
@@ -82,6 +92,18 @@ export class CashComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCashTransactions(true);
+    this.loadCashTotal();
+  }
+
+  loadCashTotal(): void {
+    this.apiService.get(`${API_CONFIG.CASH_TRANSACTION.TOTAL}`).subscribe({
+      next: (response: any) => {
+        this.balance.set(Number(response?.body?.amount ?? 0));
+      },
+      error: () => {
+        // Keep last known balance on failure
+      },
+    });
   }
 
   loadCashTransactions(reset = false): void {
@@ -182,5 +204,15 @@ export class CashComponent implements OnInit {
       : type === 'DEBIT'
         ? 'bg-rose-100 text-rose-700'
         : 'bg-gray-100 text-gray-700';
+  }
+
+  onEditCashTransaction(tx: CashTransaction): void {
+    // Wire to edit flow when API/modal is ready
+    console.log('Edit cash transaction', tx.id);
+  }
+
+  onDeleteCashTransaction(tx: CashTransaction): void {
+    // Wire to delete flow when API/modal is ready
+    console.log('Delete cash transaction', tx.id);
   }
 }

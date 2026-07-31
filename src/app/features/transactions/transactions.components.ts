@@ -30,8 +30,9 @@ export interface Transaction {
   transactionDateTime: string;
   categoryName: string;
   subCategoryName: string;
-  productName: string;
-  companyName: string;
+  payeeId: number | null;
+  payeeName: string;
+  payeeCategory: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -77,8 +78,8 @@ export class TransactionsComponents implements OnInit {
     purpose: ['', Validators.required],
     categoryName: ['', Validators.required],
     subCategoryName: [''],
-    companyName: [''],
-    productName: [''],
+    payeeName: [''],
+    payeeCategory: [''],
     amount: [0, [Validators.required, Validators.min(0)]],
   });
 
@@ -91,7 +92,7 @@ export class TransactionsComponents implements OnInit {
       let av: string | number = a[key] ?? '';
       let bv: string | number = b[key] ?? '';
 
-      if (key === 'amount' || key === 'id') {
+      if (key === 'amount' || key === 'id' || key === 'payeeId') {
         av = Number(av);
         bv = Number(bv);
       } else if (key === 'transactionDateTime' || key === 'createdAt' || key === 'updatedAt') {
@@ -159,8 +160,9 @@ export class TransactionsComponents implements OnInit {
             transactionDateTime: item.transactionDateTime,
             categoryName: item.categoryName,
             subCategoryName: item.subCategoryName,
-            productName: item.productName,
-            companyName: item.companyName,
+            payeeId: item.payeeId ?? null,
+            payeeName: item.payeeName ?? '',
+            payeeCategory: item.payeeCategory ?? '',
             createdAt: item.createdAt,
             updatedAt: item.updatedAt,
           }));
@@ -232,8 +234,8 @@ export class TransactionsComponents implements OnInit {
       purpose: tx.purpose,
       categoryName: tx.categoryName,
       subCategoryName: tx.subCategoryName ?? '',
-      companyName: tx.companyName ?? '',
-      productName: tx.productName ?? '',
+      payeeName: tx.payeeName ?? '',
+      payeeCategory: tx.payeeCategory ?? '',
       amount: Number(tx.amount) || 0,
     });
     this.showEditModal.set(true);
@@ -266,8 +268,8 @@ export class TransactionsComponents implements OnInit {
       purpose: formValue.purpose,
       categoryName: formValue.categoryName,
       subCategoryName: formValue.subCategoryName,
-      companyName: formValue.companyName,
-      productName: formValue.productName,
+      payeeName: formValue.payeeName,
+      payeeCategory: formValue.payeeCategory,
       amount: Number(formValue.amount).toFixed(2),
     };
 

@@ -348,6 +348,16 @@ export class BanksComponent implements OnInit {
         : 'bg-gray-100 text-gray-700';
   }
 
+  onEditBankTransaction(tx: BankTransaction): void {
+    // Wire to edit flow when API/modal is ready
+    console.log('Edit bank transaction', tx.id);
+  }
+
+  onDeleteBankTransaction(tx: BankTransaction): void {
+    // Wire to delete flow when API/modal is ready
+    console.log('Delete bank transaction', tx.id);
+  }
+
   @ViewChild('scrollContainer')
   scrollContainer!: ElementRef<HTMLDivElement>;
 

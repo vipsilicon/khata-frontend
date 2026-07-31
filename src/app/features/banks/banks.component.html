@@ -177,6 +177,7 @@
                       ></lucide-icon>
                     </span>
                   </th>
+                  <th class="px-4 py-3 font-semibold whitespace-nowrap text-center">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -195,6 +196,26 @@
                     </td>
                     <td class="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">
                       ₹ {{ tx.amount | number: '1.2-2' }}
+                    </td>
+                    <td class="px-4 py-3">
+                      <div class="flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          title="Edit"
+                          (click)="onEditBankTransaction(tx)"
+                          class="w-7 h-7 rounded-full bg-cyan-500 text-white flex items-center justify-center hover:bg-cyan-600 transition duration-200 shadow-md cursor-pointer"
+                        >
+                          <lucide-icon [img]="squarePen" class="w-4 h-4"></lucide-icon>
+                        </button>
+                        <button
+                          type="button"
+                          title="Delete"
+                          (click)="onDeleteBankTransaction(tx)"
+                          class="w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition duration-200 shadow-md cursor-pointer"
+                        >
+                          <lucide-icon [img]="trash" class="w-4 h-4"></lucide-icon>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 }

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpBackend, HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environment/environment';
 
@@ -39,6 +39,12 @@ export class AuthServices {
   private authStoragService = inject(AuthStorageServices);
   private apiBaseUrl = environment.apiBaseUrl;
 
+  /**
+   * Raw client that skips interceptors.
+   * Refresh must not go through the refresh interceptor (avoids loops / stuck state).
+   */
+  private refreshHttp = new HttpClient(inject(HttpBackend));
+
   userLogin(body: UserLogin): Observable<any> {
     return this.http.post(`${this.apiBaseUrl}${API_CONFIG.AUTH.LOGIN}`, body);
   }
@@ -51,10 +57,11 @@ export class AuthServices {
     return this.http.post(`${this.apiBaseUrl}${API_CONFIG.AUTH.RESET_PASSWORD}`, body);
   }
 
+  /** Call refresh-token API without going through HTTP interceptors. */
   userRefreshToken(): Observable<any> {
     const body: UserRefreshToken = {
       refreshToken: this.authStoragService.getRefreshToken() ?? '',
     };
-    return this.http.post(`${this.apiBaseUrl}${API_CONFIG.AUTH.REFRESH_TOKEN}`, body);
+    return this.refreshHttp.post(`${this.apiBaseUrl}${API_CONFIG.AUTH.REFRESH_TOKEN}`, body);
   }
 }

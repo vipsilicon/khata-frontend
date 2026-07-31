@@ -4,7 +4,8 @@ import {
   HttpHandlerFn,
   HttpRequest,
 } from '@angular/common/http';
-import { inject } from '@angular/core';
+import { inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 
 import {
@@ -21,7 +22,19 @@ import { AuthStorageServices } from '../../services/auth-storage/auth-storage.se
 import { AuthServices } from '../../services/auth/auth.services';
 import { ToasterMessageUtils } from '../../utils/toaster-message/toaster-message.utils';
 
+/**
+ * Session flow:
+ * 1. Attach access token to every protected request
+ * 2. If access token is expired (401 or 403 from this API) → call refresh-token once
+ * 3. If refresh succeeds → save new tokens → retry the original request
+ * 4. If refresh fails (invalid/expired refresh token) → logout
+ *
+ * Note: this backend returns statusCode 403 when the access token is expired/invalid.
+ */
+
 let isRefreshing = false;
+
+/** null = refresh in progress; non-empty = new access token; '' = refresh failed */
 const refreshTokenSubject = new BehaviorSubject<string | null>(null);
 
 const PUBLIC_ROUTE_MARKERS = [
@@ -36,31 +49,37 @@ function isPublicRequest(url: string): boolean {
   return PUBLIC_ROUTE_MARKERS.some((route) => url.includes(route));
 }
 
-/** Nest-style auth failures often come as 401 Unauthorized or 403 Forbidden resource. */
-function isAuthFailure(error: HttpErrorResponse): boolean {
-  if (error.status === 401) {
-    return true;
-  }
-
-  if (error.status === 403) {
-    const message = String(error.error?.message ?? error.message ?? '').toLowerCase();
-    const err = String(error.error?.error ?? '').toLowerCase();
-    return (
-      message.includes('forbidden') ||
-      message.includes('token') ||
-      message.includes('unauthorized') ||
-      err.includes('forbidden')
-    );
-  }
-
-  return false;
+/**
+ * Access token expired / unauthorized — start refresh flow.
+ * Backend uses 403 (and sometimes 401) when the access token is invalid/expired.
+ */
+function shouldAttemptRefresh(error: HttpErrorResponse): boolean {
+  return error.status === 401 || error.status === 403;
 }
 
 function extractTokens(response: any): { accessToken: string; refreshToken: string } {
-  const body = response?.body ?? response ?? {};
-  const accessToken = body.accessToken ?? body.access_token ?? '';
-  const refreshToken = body.refreshToken ?? body.refresh_token ?? '';
-  return { accessToken, refreshToken };
+  // Support: { body: { accessToken } }, { data: { accessToken } }, or flat { accessToken }
+  const root = response ?? {};
+  const layer = root.body ?? root.data ?? root;
+  const tokens = layer.body ?? layer.data ?? layer;
+
+  const accessToken =
+    tokens.accessToken ?? tokens.access_token ?? layer.accessToken ?? root.accessToken ?? '';
+  const refreshToken =
+    tokens.refreshToken ?? tokens.refresh_token ?? layer.refreshToken ?? root.refreshToken ?? '';
+
+  return {
+    accessToken: typeof accessToken === 'string' ? accessToken : '',
+    refreshToken: typeof refreshToken === 'string' ? refreshToken : '',
+  };
+}
+
+function withBearer(req: HttpRequest<unknown>, token: string): HttpRequest<unknown> {
+  return req.clone({
+    setHeaders: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 }
 
 export const refreshInterceptor: HttpInterceptorFn = (
@@ -71,28 +90,32 @@ export const refreshInterceptor: HttpInterceptorFn = (
   const authService = inject(AuthServices);
   const router = inject(Router);
   const toasterMessageService = inject(ToasterMessageUtils);
+  const platformId = inject(PLATFORM_ID);
 
-  // Never attach Bearer / never enter refresh loop for auth endpoints
   if (isPublicRequest(req.url)) {
     return next(req);
   }
 
+  // SSR: no localStorage — pass through without auth / logout side effects
+  if (!isPlatformBrowser(platformId)) {
+    return next(req);
+  }
+
   const accessToken = authStorageService.getAccessToken();
-  const authReq = accessToken
-    ? req.clone({
-        setHeaders: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-    : req;
+  const authReq = accessToken ? withBearer(req, accessToken) : req;
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (!isAuthFailure(error)) {
+      if (!shouldAttemptRefresh(error)) {
         return throwError(() => error);
       }
 
-      return handleAuthFailure(
+      // Already logged out
+      if (!authStorageService.getAccessToken() && !authStorageService.getRefreshToken()) {
+        return throwError(() => error);
+      }
+
+      return handleExpiredAccessToken(
         authReq,
         next,
         authStorageService,
@@ -104,7 +127,10 @@ export const refreshInterceptor: HttpInterceptorFn = (
   );
 };
 
-function handleAuthFailure(
+/**
+ * Access token expired → refresh → retry OR logout if refresh fails.
+ */
+function handleExpiredAccessToken(
   req: HttpRequest<unknown>,
   next: HttpHandlerFn,
   authStorageService: AuthStorageServices,
@@ -112,27 +138,24 @@ function handleAuthFailure(
   router: Router,
   toasterMessage: ToasterMessageUtils,
 ): Observable<any> {
-  const refreshToken = authStorageService.getRefreshToken();
+  const storedRefreshToken = authStorageService.getRefreshToken();
 
-  if (!refreshToken) {
+  if (!storedRefreshToken) {
     forceLogout(authStorageService, router, toasterMessage, 'Session expired. Please login again');
     return throwError(() => new Error('Refresh token not found'));
   }
 
-  // Another request already refreshing — wait for the new access token, then retry
+  // Parallel 401s: wait for the in-flight refresh, then retry once
   if (isRefreshing) {
     return refreshTokenSubject.pipe(
-      filter((token): token is string => token !== null && token.length > 0),
+      filter((token): token is string => token !== null),
       take(1),
-      switchMap((token) =>
-        next(
-          req.clone({
-            setHeaders: {
-              Authorization: `Bearer ${token}`,
-            },
-          }),
-        ),
-      ),
+      switchMap((token) => {
+        if (!token) {
+          return throwError(() => new Error('Session refresh failed'));
+        }
+        return next(withBearer(req, token));
+      }),
     );
   }
 
@@ -140,10 +163,46 @@ function handleAuthFailure(
   refreshTokenSubject.next(null);
 
   return authServices.userRefreshToken().pipe(
+    // Only refresh-API errors land here (not the retried business request)
+    catchError((refreshError: HttpErrorResponse | Error) => {
+      refreshTokenSubject.next('');
+
+      const status = refreshError instanceof HttpErrorResponse ? refreshError.status : undefined;
+
+      // Refresh token rejected / invalid → logout
+      if (status === 401 || status === 403) {
+        forceLogout(
+          authStorageService,
+          router,
+          toasterMessage,
+          'Session expired. Please login again',
+        );
+        return throwError(() => refreshError);
+      }
+
+      // Network / server down — keep tokens so a page reload can recover
+      if (status === 0 || status === undefined) {
+        toasterMessage.warning(
+          'Cannot reach server to refresh session. Check if the API is running.',
+        );
+        return throwError(() => refreshError);
+      }
+
+      // Other refresh failures (5xx, etc.) — treat as session failure → logout
+      forceLogout(
+        authStorageService,
+        router,
+        toasterMessage,
+        'Could not refresh session. Please login again',
+      );
+      return throwError(() => refreshError);
+    }),
     switchMap((response) => {
       const { accessToken, refreshToken: newRefreshToken } = extractTokens(response);
 
+      // Refresh API returned 2xx but no tokens → treat as failed refresh → logout
       if (!accessToken) {
+        refreshTokenSubject.next('');
         forceLogout(
           authStorageService,
           router,
@@ -153,37 +212,12 @@ function handleAuthFailure(
         return throwError(() => new Error('No access token in refresh response'));
       }
 
-      authStorageService.saveTokens(accessToken, newRefreshToken || refreshToken);
+      // Persist new tokens (keep old refresh if API did not rotate)
+      authStorageService.saveTokens(accessToken, newRefreshToken || storedRefreshToken);
       refreshTokenSubject.next(accessToken);
 
-      return next(
-        req.clone({
-          setHeaders: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }),
-      );
-    }),
-    catchError((refreshError: HttpErrorResponse) => {
-      // Refresh itself failed (often 401/403 Forbidden resource) → clear session
-      let message = 'Session expired. Please login again';
-
-      switch (refreshError.status) {
-        case 401:
-          message = 'Session expired. Please login again';
-          break;
-        case 403:
-          message = 'Refresh token is invalid or forbidden. Please login again';
-          break;
-        case 500:
-          message = 'Internal server error while refreshing session';
-          break;
-        default:
-          message = 'Could not refresh session. Please login again';
-      }
-
-      forceLogout(authStorageService, router, toasterMessage, message);
-      return throwError(() => refreshError);
+      // Retry original request with new access token (errors here do NOT logout)
+      return next(withBearer(req, accessToken));
     }),
     finalize(() => {
       isRefreshing = false;
@@ -198,7 +232,8 @@ function forceLogout(
   message: string,
 ): void {
   authStorageService.logout();
-  refreshTokenSubject.next(null);
+  refreshTokenSubject.next('');
+  isRefreshing = false;
   toasterMessage.warning(message);
   router.navigate(['/auth/login']);
 }
