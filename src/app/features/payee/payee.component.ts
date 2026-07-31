@@ -1,11 +1,16 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { finalize } from 'rxjs';
-import { LucideAngularModule, SquarePen, Trash2 } from 'lucide-angular';
 
 // Components
 import { ConfirmModalComponent } from '../../components/confirm-modal/confirm-modal.component';
+import { DataTableComponent } from '../../components/data-table/data-table.component';
+import { DataTableColumn } from '../../components/data-table/data-table.types';
+import { FormInputComponent } from '../../components/form-input/form-input.component';
+import {
+  FormSelectComponent,
+  FormSelectOption,
+} from '../../components/form-select/form-select.component';
 
 // Constants
 import { PAYEE_CONST } from '../../core/constants/payee.constants';
@@ -14,6 +19,9 @@ import { PAYEE_CONST } from '../../core/constants/payee.constants';
 import { ApiServices } from '../../services/api/api.services';
 import { API_CONFIG } from '../../core/config/api.config';
 import { ToasterMessageUtils } from '../../utils/toaster-message/toaster-message.utils';
+
+// Utils
+import { nextSortState, sortRows, SortDir } from '../../utils/table.utils';
 
 interface IPAYEE_CATEGORY_LIST {
   id: number;
@@ -26,9 +34,17 @@ interface IPAYEE {
   payeeCategory: string;
 }
 
+type PayeeSortKey = keyof IPAYEE;
+
 @Component({
   selector: 'app-payee.component',
-  imports: [ConfirmModalComponent, CommonModule, ReactiveFormsModule, LucideAngularModule],
+  imports: [
+    ConfirmModalComponent,
+    DataTableComponent,
+    FormInputComponent,
+    FormSelectComponent,
+    ReactiveFormsModule,
+  ],
   templateUrl: './payee.component.html',
   styleUrl: './payee.component.css',
 })
@@ -38,25 +54,42 @@ export class PayeeComponent implements OnInit {
   private toasterMessageService = inject(ToasterMessageUtils);
 
   readonly PAYEE_C = PAYEE_CONST;
-  readonly squarePen = SquarePen;
-  readonly trash = Trash2;
 
-  showAddPayeeModel = signal<boolean>(false);
-  showEditPayeeModal = signal<boolean>(false);
-  showDeletePayeeModal = signal<boolean>(false);
+  readonly columns: DataTableColumn<IPAYEE>[] = [
+    { key: 'name', label: 'Name', type: 'text', sortable: true },
+    { key: 'payeeCategory', label: 'Payee Category', type: 'text', sortable: true },
+    { key: 'actions', label: 'Action', type: 'actions', align: 'center' },
+  ];
+
+  showAddPayeeModel = signal(false);
+  showEditPayeeModal = signal(false);
+  showDeletePayeeModal = signal(false);
 
   editPayee = signal<IPAYEE | null>(null);
   deletePayee = signal<IPAYEE | null>(null);
 
-  savingPayee = signal<boolean>(false);
-  loadingPayeeCategory = signal<boolean>(false);
-  loadingPayee = signal<boolean>(false);
-  loadingPayeeMore = signal<boolean>(false);
+  savingPayee = signal(false);
+  loadingPayeeCategory = signal(false);
+  loadingPayee = signal(false);
+  loadingPayeeMore = signal(false);
   payeeCategoryList = signal<IPAYEE_CATEGORY_LIST[]>([]);
   payees = signal<IPAYEE[]>([]);
-  page = signal<number>(1);
-  lastPage = signal<number>(1);
-  total = signal<number>(0);
+  page = signal(1);
+  lastPage = signal(1);
+  total = signal(0);
+
+  sortKey = signal<PayeeSortKey>('name');
+  sortDir = signal<SortDir>('asc');
+
+  payeeCategoryOptions = computed<FormSelectOption[]>(() =>
+    this.payeeCategoryList().map((item) => ({
+      id: item.id,
+      value: item.name,
+      label: item.name,
+    })),
+  );
+
+  sortedPayees = computed(() => sortRows(this.payees(), this.sortKey(), this.sortDir()));
 
   payeeForm = this.fb.nonNullable.group({
     name: ['', Validators.required],
@@ -71,6 +104,12 @@ export class PayeeComponent implements OnInit {
   ngOnInit(): void {
     this.loadPayeeCategory();
     this.loadPayees(true);
+  }
+
+  toggleSort(key: string): void {
+    const next = nextSortState(this.sortKey(), this.sortDir(), key);
+    this.sortKey.set(next.key as PayeeSortKey);
+    this.sortDir.set(next.dir);
   }
 
   loadPayeeCategory(): void {

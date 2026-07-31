@@ -15,183 +15,23 @@
     </button>
   </div>
 
-  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-    @if (loading() && transactions().length === 0) {
-      <div class="flex items-center justify-center py-20 text-gray-500">Loading transactions…</div>
-    } @else if (!loading() && transactions().length === 0) {
-      <div class="flex items-center justify-center py-20 text-gray-500">No transactions found</div>
-    } @else {
-      <div class="overflow-auto max-h-[calc(100vh-12rem)]" (scroll)="onScroll($event)">
-        <table class="w-full text-sm text-left border-collapse">
-          <thead class="sticky top-0 z-10 bg-cyan-800 text-white">
-            <tr>
-              <th
-                class="px-4 py-3 font-semibold whitespace-nowrap cursor-pointer select-none"
-                (click)="toggleSort('transactionDateTime')"
-              >
-                <span class="inline-flex items-center gap-1">
-                  Date & Time
-                  <lucide-icon
-                    [img]="sortIcon('transactionDateTime')"
-                    class="w-3.5 h-3.5 opacity-80"
-                  ></lucide-icon>
-                </span>
-              </th>
-              <th
-                class="px-4 py-3 font-semibold whitespace-nowrap cursor-pointer select-none"
-                (click)="toggleSort('transactionType')"
-              >
-                <span class="inline-flex items-center gap-1">
-                  Type
-                  <lucide-icon
-                    [img]="sortIcon('transactionType')"
-                    class="w-3.5 h-3.5 opacity-80"
-                  ></lucide-icon>
-                </span>
-              </th>
-              <th
-                class="px-4 py-3 font-semibold whitespace-nowrap cursor-pointer select-none"
-                (click)="toggleSort('paymentMode')"
-              >
-                <span class="inline-flex items-center gap-1">
-                  Payment Mode
-                  <lucide-icon
-                    [img]="sortIcon('paymentMode')"
-                    class="w-3.5 h-3.5 opacity-80"
-                  ></lucide-icon>
-                </span>
-              </th>
-              <th
-                class="px-4 py-3 font-semibold whitespace-nowrap cursor-pointer select-none"
-                (click)="toggleSort('purpose')"
-              >
-                <span class="inline-flex items-center gap-1">
-                  Purpose
-                  <lucide-icon
-                    [img]="sortIcon('purpose')"
-                    class="w-3.5 h-3.5 opacity-80"
-                  ></lucide-icon>
-                </span>
-              </th>
-              <th
-                class="px-4 py-3 font-semibold whitespace-nowrap cursor-pointer select-none"
-                (click)="toggleSort('categoryName')"
-              >
-                <span class="inline-flex items-center gap-1">
-                  Category
-                  <lucide-icon
-                    [img]="sortIcon('categoryName')"
-                    class="w-3.5 h-3.5 opacity-80"
-                  ></lucide-icon>
-                </span>
-              </th>
-              <th
-                class="px-4 py-3 font-semibold whitespace-nowrap cursor-pointer select-none"
-                (click)="toggleSort('subCategoryName')"
-              >
-                <span class="inline-flex items-center gap-1">
-                  Sub Category
-                  <lucide-icon
-                    [img]="sortIcon('subCategoryName')"
-                    class="w-3.5 h-3.5 opacity-80"
-                  ></lucide-icon>
-                </span>
-              </th>
-              <th
-                class="px-4 py-3 font-semibold whitespace-nowrap cursor-pointer select-none"
-                (click)="toggleSort('payeeName')"
-              >
-                <span class="inline-flex items-center gap-1">
-                  Payee
-                  <lucide-icon
-                    [img]="sortIcon('payeeName')"
-                    class="w-3.5 h-3.5 opacity-80"
-                  ></lucide-icon>
-                </span>
-              </th>
-              <th
-                class="px-4 py-3 font-semibold whitespace-nowrap cursor-pointer select-none"
-                (click)="toggleSort('payeeCategory')"
-              >
-                <span class="inline-flex items-center gap-1">
-                  Payee Category
-                  <lucide-icon
-                    [img]="sortIcon('payeeCategory')"
-                    class="w-3.5 h-3.5 opacity-80"
-                  ></lucide-icon>
-                </span>
-              </th>
-              <th
-                class="px-4 py-3 font-semibold whitespace-nowrap cursor-pointer select-none"
-                (click)="toggleSort('amount')"
-              >
-                <span class="inline-flex items-center gap-1">
-                  Amount
-                  <lucide-icon
-                    [img]="sortIcon('amount')"
-                    class="w-3.5 h-3.5 opacity-80"
-                  ></lucide-icon>
-                </span>
-              </th>
-              <th class="px-4 py-3 font-semibold whitespace-nowrap text-center">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (tx of sortedTransactions(); track tx.id) {
-              <tr class="border-b border-gray-100 hover:bg-cyan-50/60 transition-colors">
-                <td class="px-4 py-3 text-gray-600 whitespace-nowrap">
-                  {{ tx.transactionDateTime | date: 'dd MMM yyyy, hh:mm a' }}
-                </td>
-                <td class="px-4 py-3">
-                  <span
-                    class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold"
-                    [ngClass]="typeBadgeClass(tx.transactionType)"
-                  >
-                    {{ tx.transactionType }}
-                  </span>
-                </td>
-                <td class="px-4 py-3 text-gray-700">{{ tx.paymentMode }}</td>
-                <td class="px-4 py-3 text-gray-700">{{ tx.purpose }}</td>
-                <td class="px-4 py-3 text-gray-700">{{ tx.categoryName }}</td>
-                <td class="px-4 py-3 text-gray-700">{{ tx.subCategoryName }}</td>
-                <td class="px-4 py-3 text-gray-700">{{ tx.payeeName || '—' }}</td>
-                <td class="px-4 py-3 text-gray-700">{{ tx.payeeCategory || '—' }}</td>
-                <td class="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">
-                  ₹ {{ tx.amount | number: '1.2-2' }}
-                </td>
-                <td class="px-4 py-3">
-                  <div class="flex items-center justify-center gap-2">
-                    <button
-                      type="button"
-                      title="Edit"
-                      (click)="onEditTransaction(tx)"
-                      class="w-7 h-7 rounded-full bg-cyan-500 text-white flex items-center justify-center hover:bg-cyan-600 transition duration-200 shadow-md cursor-pointer"
-                    >
-                      <lucide-icon [img]="squarePen" class="w-4 h-4"></lucide-icon>
-                    </button>
-                    <button
-                      type="button"
-                      title="Delete"
-                      (click)="onDeleteTransaction(tx)"
-                      class="w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition duration-200 shadow-md cursor-pointer"
-                    >
-                      <lucide-icon [img]="trash" class="w-4 h-4"></lucide-icon>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-
-        @if (loadingMore()) {
-          <div class="py-4 text-center text-sm text-gray-500">Loading more…</div>
-        } @else if (!hasMore() && transactions().length > 0) {
-          <div class="py-4 text-center text-sm text-gray-400">All transactions loaded</div>
-        }
-      </div>
-    }
-  </div>
+  <app-data-table
+    [columns]="columns"
+    [rows]="sortedTransactions()"
+    [loading]="loading()"
+    [loadingMore]="loadingMore()"
+    [hasMore]="hasMore()"
+    [infiniteScroll]="true"
+    [sortKey]="sortKey()"
+    [sortDir]="sortDir()"
+    loadingText="Loading transactions…"
+    emptyText="No transactions found"
+    allLoadedText="All transactions loaded"
+    (sortChange)="toggleSort($event)"
+    (edit)="onEditTransaction($event)"
+    (delete)="onDeleteTransaction($event)"
+    (scrolled)="onScroll($event)"
+  />
 </div>
 
 @if (showEditModal()) {
@@ -203,124 +43,99 @@
     (confirm)="confirmEditModal()"
     (cancel)="cancelEditModal()"
   >
-    <form [formGroup]="editForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
-        <label class="block mb-1.5 text-sm font-medium text-gray-700">Date & Time</label>
-        <input
-          type="datetime-local"
-          formControlName="transactionDateTime"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-cyan-500"
-        />
-        @if (
-          editForm.controls.transactionDateTime.touched &&
-          editForm.controls.transactionDateTime.invalid
-        ) {
-          <p class="text-sm text-red-500 mt-1">Date & time is required</p>
-        }
-      </div>
+    <form [formGroup]="editForm" class="grid grid-cols-1 sm:grid-cols-2">
+      <app-form-input
+        label="Date & Time"
+        type="datetime-local"
+        [control]="editForm.controls.transactionDateTime"
+        [errorMessages]="{ required: 'Date & time is required' }"
+      />
 
-      <div>
-        <label class="block mb-1.5 text-sm font-medium text-gray-700">Type</label>
-        <select
-          formControlName="transactionType"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-cyan-500"
-        >
-          <option value="">Select type</option>
-          <option value="CREDIT">CREDIT</option>
-          <option value="DEBIT">DEBIT</option>
-        </select>
-        @if (
-          editForm.controls.transactionType.touched && editForm.controls.transactionType.invalid
-        ) {
-          <p class="text-sm text-red-500 mt-1">Type is required</p>
-        }
-      </div>
+      <app-form-select
+        label="Type"
+        [control]="editForm.controls.transactionType"
+        placeholder="Select type"
+        [options]="transactionTypeOptions"
+        [errorMessages]="{ required: 'Type is required' }"
+      />
 
-      <div>
-        <label class="block mb-1.5 text-sm font-medium text-gray-700">Payment Mode</label>
-        <select
-          formControlName="paymentMode"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-cyan-500"
-        >
-          <option value="">Select payment mode</option>
-          <option value="BANK">BANK</option>
-          <option value="CASH">CASH</option>
-        </select>
-        @if (editForm.controls.paymentMode.touched && editForm.controls.paymentMode.invalid) {
-          <p class="text-sm text-red-500 mt-1">Payment mode is required</p>
-        }
-      </div>
+      <app-form-select
+        label="Payment Mode"
+        [control]="editForm.controls.paymentMode"
+        placeholder="Select payment mode"
+        [options]="paymentModeOptions"
+        [errorMessages]="{ required: 'Payment mode is required' }"
+      />
 
-      <div>
-        <label class="block mb-1.5 text-sm font-medium text-gray-700">Purpose</label>
-        <input
-          type="text"
-          formControlName="purpose"
-          placeholder="Purpose"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-cyan-500"
-        />
-        @if (editForm.controls.purpose.touched && editForm.controls.purpose.invalid) {
-          <p class="text-sm text-red-500 mt-1">Purpose is required</p>
-        }
-      </div>
+      <app-form-input
+        label="Purpose"
+        [control]="editForm.controls.purpose"
+        placeholder="Purpose"
+        [errorMessages]="{ required: 'Purpose is required' }"
+      />
 
-      <div>
-        <label class="block mb-1.5 text-sm font-medium text-gray-700">Category</label>
-        <input
-          type="text"
-          formControlName="categoryName"
-          placeholder="Category"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-cyan-500"
-        />
-        @if (editForm.controls.categoryName.touched && editForm.controls.categoryName.invalid) {
-          <p class="text-sm text-red-500 mt-1">Category is required</p>
-        }
-      </div>
+      <app-form-input
+        label="Category"
+        [control]="editForm.controls.categoryName"
+        placeholder="Category"
+        [errorMessages]="{ required: 'Category is required' }"
+      />
 
-      <div>
-        <label class="block mb-1.5 text-sm font-medium text-gray-700">Sub Category</label>
-        <input
-          type="text"
-          formControlName="subCategoryName"
-          placeholder="Sub category"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-cyan-500"
-        />
-      </div>
+      <app-form-input
+        label="Sub Category"
+        [control]="editForm.controls.subCategoryName"
+        placeholder="Sub category"
+      />
 
-      <div>
-        <label class="block mb-1.5 text-sm font-medium text-gray-700">Payee</label>
-        <input
-          type="text"
-          formControlName="payeeName"
-          placeholder="Payee name"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-cyan-500"
-        />
-      </div>
+      <app-form-input
+        label="Payee"
+        [control]="editForm.controls.payeeName"
+        placeholder="Payee name"
+      />
 
-      <div>
-        <label class="block mb-1.5 text-sm font-medium text-gray-700">Payee Category</label>
-        <input
-          type="text"
-          formControlName="payeeCategory"
-          placeholder="Payee category"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-cyan-500"
-        />
-      </div>
+      <app-form-input
+        label="Payee Category"
+        [control]="editForm.controls.payeeCategory"
+        placeholder="Payee category"
+      />
 
       <div class="sm:col-span-2">
-        <label class="block mb-1.5 text-sm font-medium text-gray-700">Amount</label>
-        <input
+        <app-form-input
+          label="Amount"
           type="number"
-          formControlName="amount"
-          min="0"
-          step="0.01"
+          [control]="editForm.controls.amount"
           placeholder="Amount"
-          class="w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-cyan-500"
+          [min]="0"
+          [step]="0.01"
+          [errorMessages]="{
+            required: 'Enter a valid amount',
+            min: 'Enter a valid amount',
+          }"
         />
-        @if (editForm.controls.amount.touched && editForm.controls.amount.invalid) {
-          <p class="text-sm text-red-500 mt-1">Enter a valid amount</p>
-        }
       </div>
     </form>
+  </app-confirm-modal>
+}
+
+@if (showDeleteModal()) {
+  <app-confirm-modal
+    title="Delete Transaction"
+    confirmButtonText="Delete"
+    cancelButtonText="Cancel"
+    (confirm)="confirmDeleteModal()"
+    (cancel)="cancelDeleteModal()"
+  >
+    <div class="px-5 py-2 space-y-3">
+      <p class="text-gray-700">
+        <span class="font-semibold">{{ deleteTransaction()?.transactionType }}</span>
+        @if (deleteTransaction()?.amount) {
+          <span class="text-gray-500"> — ₹ {{ deleteTransaction()?.amount }}</span>
+        }
+        @if (deleteTransaction()?.purpose) {
+          <span class="text-gray-500"> ({{ deleteTransaction()?.purpose }})</span>
+        }
+      </p>
+      <p class="text-lg font-semibold text-center">{{ TX_C.MODAL.DELETE }}</p>
+    </div>
   </app-confirm-modal>
 }

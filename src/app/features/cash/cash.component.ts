@@ -1,14 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  LucideAngularModule,
-  SquarePen,
-  Trash2,
-} from 'lucide-angular';
 
 // Services
 import { ApiServices } from '../../services/api/api.services';
@@ -16,6 +9,28 @@ import { ToasterMessageUtils } from '../../utils/toaster-message/toaster-message
 
 // Config
 import { API_CONFIG } from '../../core/config/api.config';
+
+// Constants
+import { CASH_CONST } from '../../core/constants/cash.constants';
+
+// Components
+import { ConfirmModalComponent } from '../../components/confirm-modal/confirm-modal.component';
+import { DataTableComponent } from '../../components/data-table/data-table.component';
+import { DataTableColumn } from '../../components/data-table/data-table.types';
+import { FormInputComponent } from '../../components/form-input/form-input.component';
+import {
+  FormSelectComponent,
+  FormSelectOption,
+} from '../../components/form-select/form-select.component';
+
+// Utils
+import {
+  creditDebitBadgeClass,
+  isNearBottom,
+  nextSortState,
+  sortRows,
+  SortDir,
+} from '../../utils/table.utils';
 
 export interface CashTransaction {
   id: number;
@@ -28,65 +43,71 @@ export interface CashTransaction {
 }
 
 type SortKey = keyof CashTransaction;
-type SortDir = 'asc' | 'desc';
 
 @Component({
   selector: 'app-cash.component',
-  imports: [CommonModule, LucideAngularModule],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    ConfirmModalComponent,
+    DataTableComponent,
+    FormInputComponent,
+    FormSelectComponent,
+  ],
   templateUrl: './cash.component.html',
   styleUrl: './cash.component.css',
 })
 export class CashComponent implements OnInit {
   private apiService = inject(ApiServices);
   private toasterMessageService = inject(ToasterMessageUtils);
+  private fb = inject(FormBuilder);
 
-  readonly arrowUp = ArrowUp;
-  readonly arrowDown = ArrowDown;
-  readonly arrowUpDown = ArrowUpDown;
-  readonly squarePen = SquarePen;
-  readonly trash = Trash2;
+  readonly CASH_C = CASH_CONST;
   readonly limit = 10;
 
-  cashTransactions = signal<CashTransaction[]>([]);
-  loading = signal<boolean>(false);
-  loadingMore = signal<boolean>(false);
-  page = signal<number>(1);
-  lastPage = signal<number>(1);
-  total = signal<number>(0);
+  readonly transactionTypeOptions: FormSelectOption[] = [
+    { value: 'CREDIT', label: 'CREDIT' },
+    { value: 'DEBIT', label: 'DEBIT' },
+  ];
 
+  readonly columns: DataTableColumn<CashTransaction>[] = [
+    { key: 'transactionDateTime', label: 'Date & Time', type: 'date', sortable: true },
+    {
+      key: 'transactionType',
+      label: 'Type',
+      type: 'badge',
+      sortable: true,
+      badgeClass: (value) => creditDebitBadgeClass(String(value ?? '')),
+    },
+    { key: 'amount', label: 'Amount', type: 'currency', sortable: true },
+    { key: 'actions', label: 'Action', type: 'actions', align: 'center' },
+  ];
+
+  cashTransactions = signal<CashTransaction[]>([]);
+  loading = signal(false);
+  loadingMore = signal(false);
+  saving = signal(false);
+  page = signal(1);
+  lastPage = signal(1);
+  total = signal(0);
   sortKey = signal<SortKey>('transactionDateTime');
   sortDir = signal<SortDir>('desc');
-  balance = signal<number>(0);
+  balance = signal(0);
 
-  sortedCashTransactions = computed(() => {
-    const list = [...this.cashTransactions()];
-    const key = this.sortKey();
-    const dir = this.sortDir();
+  showEditModal = signal(false);
+  showDeleteModal = signal(false);
+  editTransaction = signal<CashTransaction | null>(null);
+  deleteTransaction = signal<CashTransaction | null>(null);
 
-    return list.sort((a, b) => {
-      let av: string | number = a[key] ?? '';
-      let bv: string | number = b[key] ?? '';
-
-      if (key === 'amount' || key === 'id') {
-        av = Number(av);
-        bv = Number(bv);
-      } else if (key === 'transactionDateTime' || key === 'createdAt' || key === 'updatedAt') {
-        av = new Date(String(av)).getTime();
-        bv = new Date(String(bv)).getTime();
-      } else {
-        av = String(av).toLowerCase();
-        bv = String(bv).toLowerCase();
-      }
-
-      if (av < bv) {
-        return dir === 'asc' ? -1 : 1;
-      }
-      if (av > bv) {
-        return dir === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
+  editForm = this.fb.nonNullable.group({
+    transactionDateTime: ['', Validators.required],
+    transactionType: ['', Validators.required],
+    amount: [0, [Validators.required, Validators.min(0)]],
   });
+
+  sortedCashTransactions = computed(() =>
+    sortRows(this.cashTransactions(), this.sortKey(), this.sortDir()),
+  );
 
   hasMore = computed(() => this.page() < this.lastPage());
 
@@ -100,9 +121,7 @@ export class CashComponent implements OnInit {
       next: (response: any) => {
         this.balance.set(Number(response?.body?.amount ?? 0));
       },
-      error: () => {
-        // Keep last known balance on failure
-      },
+      error: () => {},
     });
   }
 
@@ -110,7 +129,6 @@ export class CashComponent implements OnInit {
     if (this.loading() || this.loadingMore()) {
       return;
     }
-
     if (!reset && this.page() > this.lastPage()) {
       return;
     }
@@ -148,26 +166,18 @@ export class CashComponent implements OnInit {
             updatedAt: item.updatedAt,
           }));
 
-          if (reset) {
-            this.cashTransactions.set(data);
-          } else {
-            this.cashTransactions.update((prev) => [...prev, ...data]);
-          }
-
+          this.cashTransactions.update((prev) => (reset ? data : [...prev, ...data]));
           this.total.set(body.total ?? data.length);
           this.lastPage.set(body.lastPage ?? 1);
         },
         error: () => {
-          this.toasterMessageService.error('Failed to load cash transactions');
+          this.toasterMessageService.error(this.CASH_C.TOASTER_MESSAGE.LOAD.FAILED);
         },
       });
   }
 
   onScroll(event: Event): void {
-    const el = event.target as HTMLElement;
-    const threshold = 80;
-
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - threshold) {
+    if (isNearBottom(event.target as HTMLElement)) {
       this.loadMore();
     }
   }
@@ -176,43 +186,133 @@ export class CashComponent implements OnInit {
     if (this.loading() || this.loadingMore() || !this.hasMore()) {
       return;
     }
-
     this.page.update((p) => p + 1);
     this.loadCashTransactions(false);
   }
 
-  toggleSort(key: SortKey): void {
-    if (this.sortKey() === key) {
-      this.sortDir.update((dir) => (dir === 'asc' ? 'desc' : 'asc'));
-      return;
-    }
-
-    this.sortKey.set(key);
-    this.sortDir.set('asc');
-  }
-
-  sortIcon(key: SortKey) {
-    if (this.sortKey() !== key) {
-      return this.arrowUpDown;
-    }
-    return this.sortDir() === 'asc' ? this.arrowUp : this.arrowDown;
-  }
-
-  typeBadgeClass(type: string): string {
-    return type === 'CREDIT'
-      ? 'bg-emerald-100 text-emerald-700'
-      : type === 'DEBIT'
-        ? 'bg-rose-100 text-rose-700'
-        : 'bg-gray-100 text-gray-700';
+  toggleSort(key: string): void {
+    const next = nextSortState(this.sortKey(), this.sortDir(), key);
+    this.sortKey.set(next.key as SortKey);
+    this.sortDir.set(next.dir);
   }
 
   onEditCashTransaction(tx: CashTransaction): void {
-    // Wire to edit flow when API/modal is ready
-    console.log('Edit cash transaction', tx.id);
+    this.editTransaction.set(tx);
+    this.editForm.reset({
+      transactionDateTime: this.toDateTimeLocal(tx.transactionDateTime),
+      transactionType: tx.transactionType,
+      amount: Number(tx.amount) || 0,
+    });
+    this.showEditModal.set(true);
+  }
+
+  cancelEditModal(): void {
+    this.showEditModal.set(false);
+    this.editTransaction.set(null);
+    this.editForm.reset({
+      transactionDateTime: '',
+      transactionType: '',
+      amount: 0,
+    });
+  }
+
+  confirmEditModal(): void {
+    if (this.editForm.invalid) {
+      this.editForm.markAllAsTouched();
+      this.toasterMessageService.warning(this.CASH_C.TOASTER_MESSAGE.REQUIRED_FIELD);
+      return;
+    }
+
+    const current = this.editTransaction();
+    if (!current || this.saving()) {
+      return;
+    }
+
+    const formValue = this.editForm.getRawValue();
+    const body = {
+      id: current.id,
+      transactionDateTime: this.fromDateTimeLocal(formValue.transactionDateTime),
+      transactionType: formValue.transactionType,
+      amount: Number(formValue.amount).toFixed(2),
+    };
+
+    this.saving.set(true);
+
+    this.apiService
+      .patch(`${API_CONFIG.CASH_TRANSACTION.UPDATE}/${current.id}`, body)
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: (response: any) => {
+          const updatedBody = response?.body ?? response ?? {};
+          const updated: CashTransaction = {
+            ...current,
+            transactionDateTime: updatedBody.transactionDateTime ?? body.transactionDateTime,
+            transactionType: updatedBody.transactionType ?? body.transactionType,
+            amount: updatedBody.amount ?? body.amount,
+          };
+
+          this.cashTransactions.update((list) =>
+            list.map((item) => (item.id === current.id ? updated : item)),
+          );
+          this.loadCashTotal();
+          this.toasterMessageService.success(this.CASH_C.TOASTER_MESSAGE.UPDATE.SUCCESS);
+          this.cancelEditModal();
+        },
+        error: () => {
+          this.toasterMessageService.error(this.CASH_C.TOASTER_MESSAGE.UPDATE.FAILED);
+        },
+      });
   }
 
   onDeleteCashTransaction(tx: CashTransaction): void {
-    // Wire to delete flow when API/modal is ready
-    console.log('Delete cash transaction', tx.id);
+    this.deleteTransaction.set(tx);
+    this.showDeleteModal.set(true);
+  }
+
+  cancelDeleteModal(): void {
+    this.showDeleteModal.set(false);
+    this.deleteTransaction.set(null);
+  }
+
+  confirmDeleteModal(): void {
+    const current = this.deleteTransaction();
+    if (!current || this.saving()) {
+      return;
+    }
+
+    this.saving.set(true);
+
+    this.apiService
+      .delete(`${API_CONFIG.CASH_TRANSACTION.DELETE}/${current.id}`)
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: () => {
+          this.cashTransactions.update((list) => list.filter((item) => item.id !== current.id));
+          this.total.update((t) => Math.max(0, t - 1));
+          this.loadCashTotal();
+          this.toasterMessageService.success(this.CASH_C.TOASTER_MESSAGE.DELETE.SUCCESS);
+          this.cancelDeleteModal();
+        },
+        error: () => {
+          this.toasterMessageService.error(this.CASH_C.TOASTER_MESSAGE.DELETE.FAILED);
+        },
+      });
+  }
+
+  private toDateTimeLocal(iso: string): string {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) {
+      return '';
+    }
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  private fromDateTimeLocal(local: string): string {
+    const d = new Date(local);
+    if (Number.isNaN(d.getTime())) {
+      return local;
+    }
+    return d.toISOString();
   }
 }

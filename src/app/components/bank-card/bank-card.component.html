@@ -1,0 +1,45 @@
+<div class="snap-start shrink-0 w-80 rounded-2xl bg-white shadow-sm hover:shadow-xl transition">
+  <div class="p-5">
+    <div class="flex items-center gap-3">
+      @if (bank.icon) {
+        <img [src]="bank.icon" class="w-20 h-20 rounded-full" alt="" />
+      } @else {
+        <div class="w-20 h-20 rounded-full bg-cyan-200"></div>
+      }
+      <div>
+        <h3 class="font-semibold text-lg">{{ bank.name }}</h3>
+        <p class="text-sm text-gray-500">{{ bank.code }}</p>
+      </div>
+    </div>
+
+    <div class="mt-2 grid grid-cols-2">
+      <p class="text-sm text-gray-600">Initial Amount</p>
+      <p class="text-sm text-gray-500">Rs. {{ bank.initialAmount | number }}</p>
+    </div>
+
+    <div class="mt-2 grid grid-cols-2">
+      <p class="text-sm text-gray-600">Balance</p>
+      <p class="text-sm text-gray-500">Rs. {{ bank.balance | number }}</p>
+    </div>
+
+    <div class="flex justify-end gap-3 mt-1">
+      <button
+        title="Edit"
+        type="button"
+        (click)="onEdit($event)"
+        class="w-7 h-7 rounded-full bg-cyan-500 text-white flex items-center justify-center hover:bg-cyan-600 transition duration-200 shadow-md cursor-pointer"
+      >
+        <lucide-icon [img]="squarePen" class="w-4 h-4"></lucide-icon>
+      </button>
+
+      <button
+        title="Delete"
+        type="button"
+        (click)="onDelete($event)"
+        class="w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition duration-200 shadow-md cursor-pointer"
+      >
+        <lucide-icon [img]="trash" class="w-4 h-4"></lucide-icon>
+      </button>
+    </div>
+  </div>
+</div>

@@ -2,14 +2,6 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  LucideAngularModule,
-  SquarePen,
-  Trash2,
-} from 'lucide-angular';
 
 // Services
 import { ApiServices } from '../../services/api/api.services';
@@ -18,8 +10,27 @@ import { ToasterMessageUtils } from '../../utils/toaster-message/toaster-message
 // Config
 import { API_CONFIG } from '../../core/config/api.config';
 
+// Constants
+import { TRANSACTIONS_CONST } from '../../core/constants/transactions.constants';
+
 // Components
 import { ConfirmModalComponent } from '../../components/confirm-modal/confirm-modal.component';
+import { DataTableComponent } from '../../components/data-table/data-table.component';
+import { DataTableColumn } from '../../components/data-table/data-table.types';
+import { FormInputComponent } from '../../components/form-input/form-input.component';
+import {
+  FormSelectComponent,
+  FormSelectOption,
+} from '../../components/form-select/form-select.component';
+
+// Utils
+import {
+  creditDebitBadgeClass,
+  isNearBottom,
+  nextSortState,
+  sortRows,
+  SortDir,
+} from '../../utils/table.utils';
 
 export interface Transaction {
   id: number;
@@ -38,11 +49,17 @@ export interface Transaction {
 }
 
 type SortKey = keyof Transaction;
-type SortDir = 'asc' | 'desc';
 
 @Component({
   selector: 'app-transactions.components',
-  imports: [CommonModule, LucideAngularModule, ReactiveFormsModule, ConfirmModalComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    ConfirmModalComponent,
+    DataTableComponent,
+    FormInputComponent,
+    FormSelectComponent,
+  ],
   templateUrl: './transactions.components.html',
   styleUrl: './transactions.components.css',
 })
@@ -51,23 +68,49 @@ export class TransactionsComponents implements OnInit {
   private toasterMessageService = inject(ToasterMessageUtils);
   private fb = inject(FormBuilder);
 
-  readonly arrowUp = ArrowUp;
-  readonly arrowDown = ArrowDown;
-  readonly arrowUpDown = ArrowUpDown;
-  readonly squarePen = SquarePen;
-  readonly trash = Trash2;
+  readonly TX_C = TRANSACTIONS_CONST;
   readonly limit = 10;
 
+  readonly transactionTypeOptions: FormSelectOption[] = [
+    { value: 'CREDIT', label: 'CREDIT' },
+    { value: 'DEBIT', label: 'DEBIT' },
+  ];
+
+  readonly paymentModeOptions: FormSelectOption[] = [
+    { value: 'BANK', label: 'BANK' },
+    { value: 'CASH', label: 'CASH' },
+  ];
+
+  readonly columns: DataTableColumn<Transaction>[] = [
+    { key: 'transactionDateTime', label: 'Date & Time', type: 'date', sortable: true },
+    {
+      key: 'transactionType',
+      label: 'Type',
+      type: 'badge',
+      sortable: true,
+      badgeClass: (value) => creditDebitBadgeClass(String(value ?? '')),
+    },
+    { key: 'paymentMode', label: 'Payment Mode', type: 'text', sortable: true },
+    { key: 'purpose', label: 'Purpose', type: 'text', sortable: true },
+    { key: 'categoryName', label: 'Category', type: 'text', sortable: true },
+    { key: 'subCategoryName', label: 'Sub Category', type: 'text', sortable: true },
+    { key: 'payeeName', label: 'Payee', type: 'text', sortable: true, emptyValue: '—' },
+    { key: 'payeeCategory', label: 'Payee Category', type: 'text', sortable: true, emptyValue: '—' },
+    { key: 'amount', label: 'Amount', type: 'currency', sortable: true },
+    { key: 'actions', label: 'Action', type: 'actions', align: 'center' },
+  ];
+
   transactions = signal<Transaction[]>([]);
-  loading = signal<boolean>(false);
-  loadingMore = signal<boolean>(false);
-  page = signal<number>(1);
-  lastPage = signal<number>(1);
-  total = signal<number>(0);
-
-  showEditModal = signal<boolean>(false);
+  loading = signal(false);
+  loadingMore = signal(false);
+  saving = signal(false);
+  page = signal(1);
+  lastPage = signal(1);
+  total = signal(0);
+  showEditModal = signal(false);
+  showDeleteModal = signal(false);
   editTransaction = signal<Transaction | null>(null);
-
+  deleteTransaction = signal<Transaction | null>(null);
   sortKey = signal<SortKey>('transactionDateTime');
   sortDir = signal<SortDir>('desc');
 
@@ -83,35 +126,9 @@ export class TransactionsComponents implements OnInit {
     amount: [0, [Validators.required, Validators.min(0)]],
   });
 
-  sortedTransactions = computed(() => {
-    const list = [...this.transactions()];
-    const key = this.sortKey();
-    const dir = this.sortDir();
-
-    return list.sort((a, b) => {
-      let av: string | number = a[key] ?? '';
-      let bv: string | number = b[key] ?? '';
-
-      if (key === 'amount' || key === 'id' || key === 'payeeId') {
-        av = Number(av);
-        bv = Number(bv);
-      } else if (key === 'transactionDateTime' || key === 'createdAt' || key === 'updatedAt') {
-        av = new Date(String(av)).getTime();
-        bv = new Date(String(bv)).getTime();
-      } else {
-        av = String(av).toLowerCase();
-        bv = String(bv).toLowerCase();
-      }
-
-      if (av < bv) {
-        return dir === 'asc' ? -1 : 1;
-      }
-      if (av > bv) {
-        return dir === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
-  });
+  sortedTransactions = computed(() =>
+    sortRows(this.transactions(), this.sortKey(), this.sortDir()),
+  );
 
   hasMore = computed(() => this.page() < this.lastPage());
 
@@ -123,7 +140,6 @@ export class TransactionsComponents implements OnInit {
     if (this.loading() || this.loadingMore()) {
       return;
     }
-
     if (!reset && this.page() > this.lastPage()) {
       return;
     }
@@ -167,12 +183,7 @@ export class TransactionsComponents implements OnInit {
             updatedAt: item.updatedAt,
           }));
 
-          if (reset) {
-            this.transactions.set(data);
-          } else {
-            this.transactions.update((prev) => [...prev, ...data]);
-          }
-
+          this.transactions.update((prev) => (reset ? data : [...prev, ...data]));
           this.total.set(body.total ?? data.length);
           this.lastPage.set(body.lastPage ?? 1);
         },
@@ -183,10 +194,7 @@ export class TransactionsComponents implements OnInit {
   }
 
   onScroll(event: Event): void {
-    const el = event.target as HTMLElement;
-    const threshold = 80;
-
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - threshold) {
+    if (isNearBottom(event.target as HTMLElement)) {
       this.loadMore();
     }
   }
@@ -195,34 +203,14 @@ export class TransactionsComponents implements OnInit {
     if (this.loading() || this.loadingMore() || !this.hasMore()) {
       return;
     }
-
     this.page.update((p) => p + 1);
     this.loadTransactions(false);
   }
 
-  toggleSort(key: SortKey): void {
-    if (this.sortKey() === key) {
-      this.sortDir.update((dir) => (dir === 'asc' ? 'desc' : 'asc'));
-      return;
-    }
-
-    this.sortKey.set(key);
-    this.sortDir.set('asc');
-  }
-
-  sortIcon(key: SortKey) {
-    if (this.sortKey() !== key) {
-      return this.arrowUpDown;
-    }
-    return this.sortDir() === 'asc' ? this.arrowUp : this.arrowDown;
-  }
-
-  typeBadgeClass(type: string): string {
-    return type === 'CREDIT'
-      ? 'bg-emerald-100 text-emerald-700'
-      : type === 'DEBIT'
-        ? 'bg-rose-100 text-rose-700'
-        : 'bg-gray-100 text-gray-700';
+  toggleSort(key: string): void {
+    const next = nextSortState(this.sortKey(), this.sortDir(), key);
+    this.sortKey.set(next.key as SortKey);
+    this.sortDir.set(next.dir);
   }
 
   onEditTransaction(tx: Transaction): void {
@@ -273,7 +261,6 @@ export class TransactionsComponents implements OnInit {
       amount: Number(formValue.amount).toFixed(2),
     };
 
-    // Local update until update API is available
     this.transactions.update((list) =>
       list.map((item) => (item.id === current.id ? updated : item)),
     );
@@ -283,8 +270,37 @@ export class TransactionsComponents implements OnInit {
   }
 
   onDeleteTransaction(tx: Transaction): void {
-    // Wire to delete flow when API/modal is ready
-    console.log('Delete transaction', tx.id);
+    this.deleteTransaction.set(tx);
+    this.showDeleteModal.set(true);
+  }
+
+  cancelDeleteModal(): void {
+    this.showDeleteModal.set(false);
+    this.deleteTransaction.set(null);
+  }
+
+  confirmDeleteModal(): void {
+    const current = this.deleteTransaction();
+    if (!current || this.saving()) {
+      return;
+    }
+
+    this.saving.set(true);
+
+    this.apiService
+      .delete(`${API_CONFIG.TRANSACTION.DELETE}/${current.id}`)
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: () => {
+          this.transactions.update((list) => list.filter((item) => item.id !== current.id));
+          this.total.update((t) => Math.max(0, t - 1));
+          this.toasterMessageService.success(this.TX_C.TOASTER_MESSAGE.DELETE.SUCCESS);
+          this.cancelDeleteModal();
+        },
+        error: () => {
+          this.toasterMessageService.error(this.TX_C.TOASTER_MESSAGE.DELETE.FAILED);
+        },
+      });
   }
 
   private toDateTimeLocal(iso: string): string {
@@ -292,7 +308,6 @@ export class TransactionsComponents implements OnInit {
     if (Number.isNaN(d.getTime())) {
       return '';
     }
-
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }

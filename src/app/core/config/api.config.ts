@@ -19,16 +19,23 @@ export const API_CONFIG = {
   },
   TRANSACTION: {
     LIST: '/transactions/list',
+    DELETE: '/transactions/delete',
   },
   CASH_TRANSACTION: {
     LIST: '/cash-transaction/list',
     TOTAL: '/cash-transaction/total',
+    UPDATE: '/cash-transaction/update',
+    DELETE: '/cash-transaction/delete',
   },
   BANK_TRANSACTION: {
     LIST: '/bank-transaction/list',
+    UPDATE: '/bank-transaction/update',
+    DELETE: '/bank-transaction/delete',
   },
   INVESTMENT: {
     LIST: '/investments/list',
+    UPDATE: '/investments/update',
+    DELETE: '/investments/delete',
   },
   PAYEE: {
     PAYEE_CATEGORY_LIST: '/payee/category-list',

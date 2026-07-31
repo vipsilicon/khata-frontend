@@ -1,0 +1,16 @@
+<div
+  role="button"
+  tabindex="0"
+  class="snap-start shrink-0 w-80 rounded-2xl border-2 border-dashed border-cyan-400 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-50 transition min-h-[12rem]"
+  (click)="onClick()"
+  (keydown.enter)="onClick()"
+  (keydown.space)="onClick(); $event.preventDefault()"
+>
+  <div
+    class="w-16 h-16 rounded-full bg-cyan-600 text-white flex items-center justify-center text-4xl"
+  >
+    <lucide-icon [img]="plus"></lucide-icon>
+  </div>
+
+  <p class="mt-4 font-semibold text-lg">{{ label }}</p>
+</div>

@@ -1,0 +1,144 @@
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+  @if (loading && rows.length === 0) {
+    <div class="flex items-center justify-center py-20 text-gray-500">{{ loadingText }}</div>
+  } @else if (!loading && rows.length === 0) {
+    <div class="flex items-center justify-center py-20 text-gray-500">{{ emptyText }}</div>
+  } @else {
+    <div
+      class="overflow-auto"
+      [ngClass]="maxHeightClass"
+      (scroll)="onScroll($event)"
+    >
+      <table class="w-full text-sm text-left border-collapse">
+        <thead class="sticky top-0 z-10 bg-cyan-800 text-white">
+          <tr>
+            @for (col of columns; track col.key) {
+              <th
+                class="px-4 py-3 font-semibold whitespace-nowrap"
+                [ngClass]="{
+                  'cursor-pointer select-none': col.sortable,
+                  'text-center': col.align === 'center' || col.type === 'actions',
+                }"
+                (click)="onHeaderClick(col)"
+              >
+                @if (col.sortable) {
+                  <span class="inline-flex items-center gap-1">
+                    {{ col.label }}
+                    <lucide-icon
+                      [img]="sortIcon(col.key)"
+                      class="w-3.5 h-3.5 opacity-80"
+                    ></lucide-icon>
+                  </span>
+                } @else {
+                  {{ col.label }}
+                }
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows; track trackRow(row)) {
+            <tr class="border-b border-gray-100 hover:bg-cyan-50/60 transition-colors">
+              @for (col of columns; track col.key) {
+                <td
+                  class="px-4 py-3"
+                  [ngClass]="[alignClass(col.align), col.cellClass || '']"
+                >
+                  @switch (col.type || 'text') {
+                    @case ('date') {
+                      <span class="text-gray-600 whitespace-nowrap">
+                        @if (!isEmpty(cellValue(row, col.key))) {
+                          {{
+                            cellValue(row, col.key)
+                              | date: col.dateFormat || 'dd MMM yyyy, hh:mm a'
+                          }}
+                        } @else {
+                          {{ col.emptyValue || '—' }}
+                        }
+                      </span>
+                    }
+                    @case ('currency') {
+                      <span class="font-medium text-gray-800 whitespace-nowrap">
+                        @if (!isEmpty(cellValue(row, col.key))) {
+                          ₹ {{ cellValue(row, col.key) | number: col.numberFormat || '1.2-2' }}
+                        } @else {
+                          {{ col.emptyValue || '—' }}
+                        }
+                      </span>
+                    }
+                    @case ('number') {
+                      <span class="text-gray-700 whitespace-nowrap">
+                        @if (!isEmpty(cellValue(row, col.key))) {
+                          {{ cellValue(row, col.key) | number: col.numberFormat || '1.2-2' }}
+                        } @else {
+                          {{ col.emptyValue || '—' }}
+                        }
+                      </span>
+                    }
+                    @case ('badge') {
+                      @if (!isEmpty(cellValue(row, col.key))) {
+                        <span
+                          class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold"
+                          [ngClass]="
+                            col.badgeClass
+                              ? col.badgeClass(cellValue(row, col.key), row)
+                              : 'bg-gray-100 text-gray-700'
+                          "
+                        >
+                          {{ cellValue(row, col.key) }}
+                        </span>
+                      } @else {
+                        <span class="text-gray-700">{{ col.emptyValue || '—' }}</span>
+                      }
+                    }
+                    @case ('actions') {
+                      <div class="flex items-center justify-center gap-2">
+                        @if (showEdit) {
+                          <button
+                            type="button"
+                            title="Edit"
+                            (click)="onEdit(row, $event)"
+                            class="w-7 h-7 rounded-full bg-cyan-500 text-white flex items-center justify-center hover:bg-cyan-600 transition duration-200 shadow-md cursor-pointer"
+                          >
+                            <lucide-icon [img]="squarePen" class="w-4 h-4"></lucide-icon>
+                          </button>
+                        }
+                        @if (showDelete) {
+                          <button
+                            type="button"
+                            title="Delete"
+                            (click)="onDelete(row, $event)"
+                            class="w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition duration-200 shadow-md cursor-pointer"
+                          >
+                            <lucide-icon [img]="trash" class="w-4 h-4"></lucide-icon>
+                          </button>
+                        }
+                      </div>
+                    }
+                    @default {
+                      <span class="text-gray-700">
+                        @if (!isEmpty(cellValue(row, col.key))) {
+                          {{ cellValue(row, col.key) }}
+                        } @else {
+                          {{ col.emptyValue || '—' }}
+                        }
+                      </span>
+                    }
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      @if (infiniteScroll) {
+        @if (loadingMore) {
+          <div class="py-4 text-center text-sm text-gray-500">{{ loadingMoreText }}</div>
+        } @else if (!hasMore && rows.length > 0) {
+          <div class="py-4 text-center text-sm text-gray-400">{{ allLoadedText }}</div>
+        }
+      }
+    </div>
+  }
+</div>
