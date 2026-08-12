@@ -2,7 +2,7 @@
   <p class="text-gray-500 text-sm">
     Cash transactions
     @if (total() > 0) {
-      <span>— {{ cashTransactions().length }} of {{ total() }} loaded</span>
+      <span>— {{ total() }} records</span>
     }
   </p>
 
@@ -19,18 +19,18 @@
   [columns]="columns"
   [rows]="sortedCashTransactions()"
   [loading]="loading()"
-  [loadingMore]="loadingMore()"
-  [hasMore]="hasMore()"
-  [infiniteScroll]="true"
+  [showPagination]="true"
+  [page]="page()"
+  [limit]="limit"
+  [total]="total()"
   [sortKey]="sortKey()"
   [sortDir]="sortDir()"
   loadingText="Loading cash transactions…"
   emptyText="No cash transactions found"
-  allLoadedText="All cash transactions loaded"
   (sortChange)="toggleSort($event)"
   (edit)="onEditCashTransaction($event)"
   (delete)="onDeleteCashTransaction($event)"
-  (scrolled)="onScroll($event)"
+  (pageChange)="onPageChange($event)"
 />
 
 @if (showAddModal()) {

@@ -14,6 +14,10 @@
   [columns]="columns"
   [rows]="sortedPayees()"
   [loading]="loadingPayee()"
+  [showPagination]="true"
+  [page]="page()"
+  [limit]="limit"
+  [total]="total()"
   [sortKey]="sortKey()"
   [sortDir]="sortDir()"
   loadingText="Loading Payee Records"
@@ -21,6 +25,7 @@
   (sortChange)="toggleSort($event)"
   (edit)="onEditPayee($event)"
   (delete)="onDeletePayee($event)"
+  (pageChange)="onPageChange($event)"
 />
 
 @if (showAddPayeeModel()) {

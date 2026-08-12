@@ -1,4 +1,58 @@
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+  @if (showPagination && total > 0) {
+    <div class="flex items-center justify-end gap-3 px-4 py-2.5 border-b border-gray-100 bg-gray-50/80">
+      <span class="text-xs sm:text-sm text-gray-500 whitespace-nowrap">
+        {{ fromRecord }}–{{ toRecord }} of {{ total }}
+      </span>
+
+      <div class="flex items-center gap-1">
+        <button
+          type="button"
+          title="Previous page"
+          [disabled]="!canGoPrev"
+          (click)="prevPage()"
+          class="w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-600 flex items-center justify-center transition
+            hover:bg-cyan-50 hover:border-cyan-300 hover:text-cyan-800
+            disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-200 disabled:hover:text-gray-600"
+        >
+          <lucide-icon [img]="chevronLeft" class="w-4 h-4"></lucide-icon>
+        </button>
+
+        @for (p of pageNumbers; track $index) {
+          @if (p === '…') {
+            <span class="w-8 h-8 flex items-center justify-center text-gray-400 text-sm">…</span>
+          } @else {
+            <button
+              type="button"
+              [disabled]="loading"
+              (click)="goToPage(p)"
+              class="min-w-8 h-8 px-2 rounded-lg text-sm font-medium transition cursor-pointer disabled:cursor-not-allowed"
+              [ngClass]="
+                p === page
+                  ? 'bg-cyan-700 text-white shadow-sm'
+                  : 'border border-gray-200 bg-white text-gray-700 hover:bg-cyan-50 hover:border-cyan-300 hover:text-cyan-800'
+              "
+            >
+              {{ p }}
+            </button>
+          }
+        }
+
+        <button
+          type="button"
+          title="Next page"
+          [disabled]="!canGoNext"
+          (click)="nextPage()"
+          class="w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-600 flex items-center justify-center transition
+            hover:bg-cyan-50 hover:border-cyan-300 hover:text-cyan-800
+            disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:border-gray-200 disabled:hover:text-gray-600"
+        >
+          <lucide-icon [img]="chevronRight" class="w-4 h-4"></lucide-icon>
+        </button>
+      </div>
+    </div>
+  }
+
   @if (loading && rows.length === 0) {
     <div class="flex items-center justify-center py-20 text-gray-500">{{ loadingText }}</div>
   } @else if (!loading && rows.length === 0) {

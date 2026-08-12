@@ -3,7 +3,7 @@
   <p class="text-gray-500 text-sm">
     Passbook for the selected bank account
     @if (txTotal() > 0) {
-      <span>— {{ bankTransactions().length }} of {{ txTotal() }} loaded</span>
+      <span>— {{ txTotal() }} records</span>
     }
   </p>
   <!-- Note: one user can have multiple bank accounts -->
@@ -50,19 +50,19 @@
     [columns]="bankTxColumns"
     [rows]="sortedBankTransactions()"
     [loading]="txLoading()"
-    [loadingMore]="txLoadingMore()"
-    [hasMore]="txHasMore()"
-    [infiniteScroll]="true"
+    [showPagination]="true"
+    [page]="txPage()"
+    [limit]="txLimit"
+    [total]="txTotal()"
     [sortKey]="txSortKey()"
     [sortDir]="txSortDir()"
     [maxHeightClass]="tableMaxHeightClass()"
     loadingText="Loading bank transactions…"
     emptyText="No bank transactions found"
-    allLoadedText="All bank transactions loaded"
     (sortChange)="toggleTxSort($event)"
     (edit)="onEditBankTransaction($event)"
     (delete)="onDeleteBankTransaction($event)"
-    (scrolled)="onTxScroll($event)"
+    (pageChange)="onTxPageChange($event)"
   />
 }
 

@@ -4,6 +4,8 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
   LucideAngularModule,
   SquarePen,
   Trash2,
@@ -22,6 +24,8 @@ export class DataTableComponent {
   readonly arrowUp = ArrowUp;
   readonly arrowDown = ArrowDown;
   readonly arrowUpDown = ArrowUpDown;
+  readonly chevronLeft = ChevronLeft;
+  readonly chevronRight = ChevronRight;
   readonly squarePen = SquarePen;
   readonly trash = Trash2;
 
@@ -41,6 +45,12 @@ export class DataTableComponent {
   /** Enable infinite-scroll container + scroll event. */
   @Input() infiniteScroll = false;
 
+  /** Server-side pagination (page / limit query params on parent). */
+  @Input() showPagination = false;
+  @Input() page = 1;
+  @Input() limit = 10;
+  @Input() total = 0;
+
   @Input() loadingText = 'Loading…';
   @Input() emptyText = 'No records found';
   @Input() loadingMoreText = 'Loading more…';
@@ -58,6 +68,67 @@ export class DataTableComponent {
   @Output() edit = new EventEmitter<any>();
   @Output() delete = new EventEmitter<any>();
   @Output() scrolled = new EventEmitter<Event>();
+  /** Emits the requested page number (1-based). */
+  @Output() pageChange = new EventEmitter<number>();
+
+  get totalPages(): number {
+    if (this.total <= 0 || this.limit <= 0) {
+      return 1;
+    }
+    return Math.max(1, Math.ceil(this.total / this.limit));
+  }
+
+  get fromRecord(): number {
+    if (this.total <= 0) {
+      return 0;
+    }
+    return (this.page - 1) * this.limit + 1;
+  }
+
+  get toRecord(): number {
+    if (this.total <= 0) {
+      return 0;
+    }
+    return Math.min(this.page * this.limit, this.total);
+  }
+
+  get canGoPrev(): boolean {
+    return this.page > 1 && !this.loading;
+  }
+
+  get canGoNext(): boolean {
+    return this.page < this.totalPages && !this.loading;
+  }
+
+  /** Compact page list with ellipsis for large totals. */
+  get pageNumbers(): (number | '…')[] {
+    const total = this.totalPages;
+    const current = this.page;
+    if (total <= 7) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+
+    const pages = new Set<number>();
+    pages.add(1);
+    pages.add(total);
+    for (let p = current - 1; p <= current + 1; p++) {
+      if (p >= 1 && p <= total) {
+        pages.add(p);
+      }
+    }
+
+    const sorted = [...pages].sort((a, b) => a - b);
+    const result: (number | '…')[] = [];
+    let prev = 0;
+    for (const p of sorted) {
+      if (prev && p - prev > 1) {
+        result.push('…');
+      }
+      result.push(p);
+      prev = p;
+    }
+    return result;
+  }
 
   onHeaderClick(col: DataTableColumn): void {
     if (!col.sortable) {
@@ -96,6 +167,25 @@ export class DataTableComponent {
       return;
     }
     this.scrolled.emit(event);
+  }
+
+  goToPage(page: number): void {
+    if (this.loading || page < 1 || page > this.totalPages || page === this.page) {
+      return;
+    }
+    this.pageChange.emit(page);
+  }
+
+  prevPage(): void {
+    if (this.canGoPrev) {
+      this.goToPage(this.page - 1);
+    }
+  }
+
+  nextPage(): void {
+    if (this.canGoNext) {
+      this.goToPage(this.page + 1);
+    }
   }
 
   onEdit(row: Record<string, any>, event: Event): void {

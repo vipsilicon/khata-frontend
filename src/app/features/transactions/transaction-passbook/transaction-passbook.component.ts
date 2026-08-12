@@ -26,7 +26,6 @@ import {
 // Utils
 import {
   creditDebitBadgeClass,
-  isNearBottom,
   nextSortState,
   sortRows,
   SortDir,
@@ -136,7 +135,6 @@ export class TransactionPassbookComponent implements OnInit {
   bankOptions = signal<FormSelectOption[]>([]);
   investmentTypeOptions = signal<FormSelectOption[]>([]);
   loading = signal(false);
-  loadingMore = signal(false);
   saving = signal(false);
   page = signal(1);
   lastPage = signal(1);
@@ -210,8 +208,6 @@ export class TransactionPassbookComponent implements OnInit {
   sortedTransactions = computed(() =>
     sortRows(this.transactions(), this.sortKey(), this.sortDir()),
   );
-
-  hasMore = computed(() => this.page() < this.lastPage());
 
   ngOnInit(): void {
     this.loadTransactions(true);
@@ -442,20 +438,15 @@ export class TransactionPassbookComponent implements OnInit {
   }
 
   loadTransactions(reset = false): void {
-    if (this.loading() || this.loadingMore()) {
-      return;
-    }
-    if (!reset && this.page() > this.lastPage()) {
+    if (this.loading()) {
       return;
     }
 
     if (reset) {
       this.page.set(1);
-      this.loading.set(true);
-    } else {
-      this.loadingMore.set(true);
     }
 
+    this.loading.set(true);
     const currentPage = this.page();
 
     this.apiService
@@ -466,7 +457,6 @@ export class TransactionPassbookComponent implements OnInit {
       .pipe(
         finalize(() => {
           this.loading.set(false);
-          this.loadingMore.set(false);
         }),
       )
       .subscribe({
@@ -491,9 +481,17 @@ export class TransactionPassbookComponent implements OnInit {
             updatedAt: item.updatedAt,
           }));
 
-          this.transactions.update((prev) => (reset ? data : [...prev, ...data]));
-          this.total.set(body.total ?? data.length);
-          this.lastPage.set(body.lastPage ?? 1);
+          const total = Number(body.total ?? data.length) || 0;
+          const current =
+            Number(body.page ?? body.currentPage ?? currentPage) || currentPage;
+          const lastPage =
+            Number(body.lastPage ?? body.lastpage) ||
+            Math.max(1, Math.ceil(total / this.limit) || 1);
+
+          this.transactions.set(data);
+          this.total.set(total);
+          this.page.set(current);
+          this.lastPage.set(lastPage);
         },
         error: () => {
           this.toasterMessageService.error(this.TX_C.TOASTER_MESSAGE.LOAD.FAILED);
@@ -501,17 +499,11 @@ export class TransactionPassbookComponent implements OnInit {
       });
   }
 
-  onScroll(event: Event): void {
-    if (isNearBottom(event.target as HTMLElement)) {
-      this.loadMore();
-    }
-  }
-
-  loadMore(): void {
-    if (this.loading() || this.loadingMore() || !this.hasMore()) {
+  onPageChange(page: number): void {
+    if (page === this.page() || this.loading()) {
       return;
     }
-    this.page.update((p) => p + 1);
+    this.page.set(page);
     this.loadTransactions(false);
   }
 

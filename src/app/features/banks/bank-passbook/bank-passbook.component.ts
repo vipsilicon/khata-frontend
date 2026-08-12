@@ -36,7 +36,6 @@ import { BankCardData } from '../../../components/bank-card/bank-card.component'
 // Utils
 import {
   creditDebitBadgeClass,
-  isNearBottom,
   nextSortState,
   sortRows,
   SortDir,
@@ -127,7 +126,6 @@ export class BankPassbookComponent implements OnInit {
 
   bankTransactions = signal<BankTransaction[]>([]);
   txLoading = signal(false);
-  txLoadingMore = signal(false);
   savingTx = signal(false);
   txPage = signal(1);
   txLastPage = signal(1);
@@ -151,8 +149,6 @@ export class BankPassbookComponent implements OnInit {
   sortedBankTransactions = computed(() =>
     sortRows(this.bankTransactions(), this.txSortKey(), this.txSortDir()),
   );
-
-  txHasMore = computed(() => this.txPage() < this.txLastPage());
 
   constructor() {
     // Reload transactions when parent changes the selected bank
@@ -183,21 +179,16 @@ export class BankPassbookComponent implements OnInit {
 
   loadBankTransactions(reset = false): void {
     const userBankId = this.selectedUserBankId();
-    if (userBankId == null || this.txLoading() || this.txLoadingMore()) {
-      return;
-    }
-    if (!reset && this.txPage() > this.txLastPage()) {
+    if (userBankId == null || this.txLoading()) {
       return;
     }
 
     if (reset) {
       this.txPage.set(1);
-      this.txLoading.set(true);
       this.bankTransactions.set([]);
-    } else {
-      this.txLoadingMore.set(true);
     }
 
+    this.txLoading.set(true);
     const currentPage = this.txPage();
 
     this.apiService
@@ -209,7 +200,6 @@ export class BankPassbookComponent implements OnInit {
       .pipe(
         finalize(() => {
           this.txLoading.set(false);
-          this.txLoadingMore.set(false);
         }),
       )
       .subscribe({
@@ -232,9 +222,17 @@ export class BankPassbookComponent implements OnInit {
             updatedAt: item.updatedAt,
           }));
 
-          this.bankTransactions.update((prev) => (reset ? data : [...prev, ...data]));
-          this.txTotal.set(body.total ?? data.length);
-          this.txLastPage.set(body.lastPage ?? 1);
+          const total = Number(body.total ?? data.length) || 0;
+          const current =
+            Number(body.page ?? body.currentPage ?? currentPage) || currentPage;
+          const lastPage =
+            Number(body.lastPage ?? body.lastpage) ||
+            Math.max(1, Math.ceil(total / this.txLimit) || 1);
+
+          this.bankTransactions.set(data);
+          this.txTotal.set(total);
+          this.txPage.set(current);
+          this.txLastPage.set(lastPage);
         },
         error: () => {
           this.toasterMessageService.error(this.BANKS_C.TOASTER_MESSAGE.TX.LOAD_FAILED);
@@ -242,17 +240,11 @@ export class BankPassbookComponent implements OnInit {
       });
   }
 
-  onTxScroll(event: Event): void {
-    if (isNearBottom(event.target as HTMLElement)) {
-      this.loadMoreBankTransactions();
-    }
-  }
-
-  loadMoreBankTransactions(): void {
-    if (this.txLoading() || this.txLoadingMore() || !this.txHasMore()) {
+  onTxPageChange(page: number): void {
+    if (page === this.txPage() || this.txLoading()) {
       return;
     }
-    this.txPage.update((p) => p + 1);
+    this.txPage.set(page);
     this.loadBankTransactions(false);
   }
 

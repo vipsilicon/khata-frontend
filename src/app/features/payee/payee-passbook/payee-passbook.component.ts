@@ -55,6 +55,7 @@ export class PayeePassbookComponent implements OnInit {
   private toasterMessageService = inject(ToasterMessageUtils);
 
   readonly PAYEE_C = PAYEE_CONST;
+  readonly limit = 10;
 
   readonly columns: DataTableColumn<IPAYEE>[] = [
     { key: 'name', label: 'Name', type: 'text', sortable: true },
@@ -72,7 +73,6 @@ export class PayeePassbookComponent implements OnInit {
   savingPayee = signal(false);
   loadingPayeeCategory = signal(false);
   loadingPayee = signal(false);
-  loadingPayeeMore = signal(false);
   payeeCategoryList = signal<IPAYEE_CATEGORY_LIST[]>([]);
   payees = signal<IPAYEE[]>([]);
   page = signal(1);
@@ -139,27 +139,25 @@ export class PayeePassbookComponent implements OnInit {
   }
 
   loadPayees(reset = false): void {
-    if (this.loadingPayee() || this.loadingPayeeMore()) {
-      return;
-    }
-
-    if (!reset && this.page() > this.lastPage()) {
+    if (this.loadingPayee()) {
       return;
     }
 
     if (reset) {
       this.page.set(1);
-      this.loadingPayee.set(true);
-    } else {
-      this.loadingPayeeMore.set(true);
     }
 
+    this.loadingPayee.set(true);
+    const currentPage = this.page();
+
     this.apiService
-      .get(`${API_CONFIG.PAYEE.LIST}`, {})
+      .get(`${API_CONFIG.PAYEE.LIST}`, {
+        page: currentPage,
+        limit: this.limit,
+      })
       .pipe(
         finalize(() => {
           this.loadingPayee.set(false);
-          this.loadingPayeeMore.set(false);
         }),
       )
       .subscribe({
@@ -172,19 +170,30 @@ export class PayeePassbookComponent implements OnInit {
             payeeCategory: item.payeeCategory,
           }));
 
-          if (reset) {
-            this.payees.set(data);
-          } else {
-            this.payees.update((prev) => [...prev, ...data]);
-          }
+          const total = Number(body.total ?? data.length) || 0;
+          const current =
+            Number(body.page ?? body.currentPage ?? currentPage) || currentPage;
+          const lastPage =
+            Number(body.lastPage ?? body.lastpage) ||
+            Math.max(1, Math.ceil(total / this.limit) || 1);
 
-          this.total.set(body.total ?? data.length);
-          this.lastPage.set(body.lastpage ?? 1);
+          this.payees.set(data);
+          this.total.set(total);
+          this.page.set(current);
+          this.lastPage.set(lastPage);
         },
         error: () => {
           this.toasterMessageService.error(PAYEE_CONST.TOASTER_MESSAGE.LOAD.FAILED);
         },
       });
+  }
+
+  onPageChange(page: number): void {
+    if (page === this.page() || this.loadingPayee()) {
+      return;
+    }
+    this.page.set(page);
+    this.loadPayees(false);
   }
 
   onAddPayee(): void {
