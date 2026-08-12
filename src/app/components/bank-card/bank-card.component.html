@@ -24,12 +24,12 @@
 
     <div class="mt-2 grid grid-cols-2">
       <p class="text-sm text-gray-600">Initial Amount</p>
-      <p class="text-sm text-gray-500">Rs. {{ bank.initialAmount | number }}</p>
+      <p class="text-sm text-gray-500">{{ bank.initialAmount | currency: 'INR' }}</p>
     </div>
 
     <div class="mt-2 grid grid-cols-2">
       <p class="text-sm text-gray-600">Balance</p>
-      <p class="text-sm text-gray-500">Rs. {{ bank.balance | number }}</p>
+      <p class="text-sm text-gray-500">{{ bank.balance | currency: 'INR' }}</p>
     </div>
 
     <div class="flex justify-end gap-3 mt-1">
