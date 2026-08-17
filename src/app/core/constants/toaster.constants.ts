@@ -1,3 +1,4 @@
 export const TOASTER_CONST = {
   DEFAULT_DURATION: 2000,
+  ERROR_DURATION: 3000,
 };
